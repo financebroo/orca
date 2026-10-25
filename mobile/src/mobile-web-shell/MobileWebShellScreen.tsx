@@ -39,7 +39,7 @@ import { SHELL_OPENING_LABEL, ShellPageCover, ShellWaitingFrame } from './ShellW
 import { ShellDownloadProgress } from './ShellDownloadProgress'
 import { useReportedShellOverlayLoad, type ShellOverlayLoad } from './shell-overlay-load'
 import { pageSafeAreaInsets, usePublishedSafeAreaInsets } from './page-safe-area-insets'
-import { useFoldDivision, usePublishedFoldDivision } from './use-published-fold-division'
+import { usePublishedWindowRegions, useShellWindowRegions } from './use-shell-window-regions'
 import { useShellSideRailInsets } from './use-shell-side-rail-insets'
 import { hostProfileUnreadableLine, pageFaultLine } from './shell-lifecycle-log'
 import { recordShellLifecycleLine } from './shell-lifecycle-line-recorder'
@@ -172,8 +172,8 @@ export function MobileWebShellScreen({
   // Only a ready, full-screen page draws the rail; an overlay floats over a screen that keeps it.
   const railInsets = useShellSideRailInsets(insets, !overlay && state.kind === 'ready')
   const pageInsets = pageSafeAreaInsets({ insets: railInsets, topCovered: noticeShown })
-  // The page cannot see the hinge either; it lays itself out around the division the shell reads.
-  const foldDivision = useFoldDivision()
+  // The page cannot see the hinge or the status column either; it lays out around what the shell reads.
+  const windowRegions = useShellWindowRegions()
   const { snapshot, unreadable, readStorage, refreshStorage, writeStorage, readWorkspaceKey } =
     usePageHostSnapshot(hostId, route.pathname, ownsHostArea)
   // Create the media registry before the bridge; its staged files must belong to this page session.
@@ -197,7 +197,7 @@ export function MobileWebShellScreen({
     route,
     safeAreaInsets: pageInsets,
     keyboardInset,
-    foldDivision,
+    ...windowRegions,
     pageRoutes,
     pageRouteGrants,
     routeGrants,
@@ -278,7 +278,7 @@ export function MobileWebShellScreen({
   useEffect(() => {
     publishKeyboardInset(keyboardInset)
   }, [publishKeyboardInset, keyboardInset])
-  usePublishedFoldDivision(bridge.publishFoldDivision, foldDivision)
+  usePublishedWindowRegions(bridge, windowRegions)
 
   const stackGestureEnabled = useHostStackGestureEnabled()
   // Use navigation screen options to disable this stack entry’s gesture; the router has no such option.

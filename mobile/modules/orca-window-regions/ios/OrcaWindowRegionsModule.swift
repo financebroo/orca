@@ -1,14 +1,15 @@
 import ExpoModulesCore
 import UIKit
 
-// Why: a partially folded iPhone Duo divides the window at its hinge, and neither the safe area
-// nor React Native report it. Emits the division in window points, or null when flat or closed.
-public class OrcaFoldDivisionModule: Module {
+// Why: iPhone Duo divides the window at its hinge when partially folded and occludes part of it
+// with its status column; neither shows in the safe area or React Native. Emits both in window
+// points: the division (null when flat or closed) and the occluded rects.
+public class OrcaWindowRegionsModule: Module {
   private var probe: UIView?
   private var keyWindowObserver: NSObjectProtocol?
 
   public func definition() -> ModuleDefinition {
-    Name("OrcaFoldDivision")
+    Name("OrcaWindowRegions")
 
     Events("onChange")
 
@@ -54,9 +55,9 @@ public class OrcaFoldDivisionModule: Module {
     // UIKit 9127.0.85 ships with the iOS 27.1 SDK, the first with reserved regions.
     #if canImport(UIKit, _version: 9127.0.85)
       if #available(iOS 27.1, *) {
-        let probe = FoldDivisionProbe(frame: window.bounds)
-        probe.onChange = { [weak self] division in
-          self?.sendEvent("onChange", ["division": division as Any])
+        let probe = WindowRegionsProbe(frame: window.bounds)
+        probe.onChange = { [weak self] payload in
+          self?.sendEvent("onChange", payload)
         }
         window.insertSubview(probe, at: 0)
         self.probe = probe
@@ -69,9 +70,9 @@ public class OrcaFoldDivisionModule: Module {
   /// Invisible full-window view: laid out on every resize, and again by its hinge interaction
   /// when the fold angle changes without resizing the window.
   @available(iOS 27.1, *)
-  private final class FoldDivisionProbe: UIView {
-    var onChange: (([String: Double]?) -> Void)?
-    private var reported: CGRect??
+  private final class WindowRegionsProbe: UIView {
+    var onChange: (([String: Any]) -> Void)?
+    private var reported: (division: CGRect?, occlusions: [CGRect])?
 
     override init(frame: CGRect) {
       super.init(frame: frame)
@@ -89,13 +90,18 @@ public class OrcaFoldDivisionModule: Module {
       super.layoutSubviews()
       guard let window else { return }
       let division = window.reservedRegions(kind: .division).first?.frame
+      let occlusions = window.reservedRegions(kind: .occlusion).map(\.frame)
       // The first layout always reports, so a listener starts from the real state.
-      if let reported, reported == division { return }
-      reported = .some(division)
-      onChange?(
-        division.map {
-          ["x": Double($0.minX), "y": Double($0.minY), "width": Double($0.width), "height": Double($0.height)]
-        })
+      if let reported, reported.division == division, reported.occlusions == occlusions { return }
+      reported = (division, occlusions)
+      onChange?([
+        "division": division.map(Self.rectPayload) as Any,
+        "occlusions": occlusions.map(Self.rectPayload),
+      ])
+    }
+
+    private static func rectPayload(_ rect: CGRect) -> [String: Double] {
+      ["x": Double(rect.minX), "y": Double(rect.minY), "width": Double(rect.width), "height": Double(rect.height)]
     }
   }
 #endif

@@ -80,7 +80,9 @@ describe('a device that folds under a live page', () => {
     const session = pair.client.getShellSession()
     expect(session?.foldDivision).toBeNull()
     const seen: (typeof HINGE | null)[] = []
-    const unsubscribe = pair.client.onFoldDivisionUpdate((division) => seen.push(division))
+    const unsubscribe = pair.client.onWindowRegionsUpdate(() =>
+      seen.push(pair.client.getShellSession()?.foldDivision ?? null)
+    )
     const moved = { ...HINGE, y: 300 }
     for (const division of [HINGE, moved, null]) {
       pair.host.publishFoldDivision(division)

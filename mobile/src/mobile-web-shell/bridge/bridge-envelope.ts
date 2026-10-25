@@ -242,6 +242,8 @@ const BridgeHostMessageSchema = z.union([
     keyboardInset: BridgeKeyboardInsetSchema.optional(),
     /** Where a partially folded device divides the window; absent reads as flat. */
     foldDivision: BridgeFoldDivisionSchema.optional(),
+    /** Where the side rail can start below the status column; absent reads as unknown. */
+    sideRailTop: BridgeKeyboardInsetSchema.optional(),
     host: BridgeInitHostSchema.optional(),
     storage: BridgeInitStorageSchema.optional(),
     // Advisory page fast path for oversized keys; the shell independently refuses writes because older pages ignore this additive field (ruling 33.6).

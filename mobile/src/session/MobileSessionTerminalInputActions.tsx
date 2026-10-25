@@ -1,15 +1,12 @@
-import { StyleSheet } from 'react-native'
 import { styles } from './mobile-session-styles'
 import { MobileTerminalInputActions } from './MobileTerminalInputActions'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
-// The session's photo + mic actions, wired once for the input bars and the side rail.
+// The session's photo + mic actions, wired once for both input bars.
 export function MobileSessionTerminalInputActions({
-  controller,
-  inRail = false
+  controller
 }: {
   controller: MobileSessionController
-  inRail?: boolean
 }) {
   const {
     canSend,
@@ -30,7 +27,7 @@ export function MobileSessionTerminalInputActions({
       dictation={dictation}
       dictationMode={dictationMode}
       dictationEnabled={dictationEnabled}
-      buttonStyle={inRail ? [styles.dictationButton, railStyles.button] : styles.dictationButton}
+      buttonStyle={styles.dictationButton}
       activeButtonStyle={styles.dictationButtonActive}
       disabledButtonStyle={styles.sendButtonDisabled}
       onAttachImage={() => void attachImage('library')}
@@ -42,8 +39,3 @@ export function MobileSessionTerminalInputActions({
     />
   )
 }
-
-const railStyles = StyleSheet.create({
-  // The input bar spaces its row with a right margin; the rail column spaces with gap.
-  button: { marginRight: 0 }
-})

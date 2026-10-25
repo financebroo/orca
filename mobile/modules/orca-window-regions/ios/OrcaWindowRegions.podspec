@@ -1,7 +1,7 @@
 Pod::Spec.new do |s|
-  s.name = 'OrcaFoldDivision'
+  s.name = 'OrcaWindowRegions'
   s.version = '0.0.1'
-  s.summary = 'Reports the window region a partially folded device divides at its hinge'
+  s.summary = 'Reports the window regions a foldable divides at its hinge and occludes with its status column'
   s.description = s.summary
   s.license = { :type => 'MIT' }
   s.author = 'Orca'

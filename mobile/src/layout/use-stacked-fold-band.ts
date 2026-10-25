@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LayoutChangeEvent, View } from 'react-native'
 import { foldPosture } from './fold-division'
-import { useFoldDivision } from './use-fold-division'
+import { useFoldDivision } from './use-window-regions'
 
 export type StackedFoldBand = {
   /** Attach to the view the band is measured against. */

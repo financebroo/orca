@@ -72,6 +72,8 @@ export type BridgeHostOptions = {
   keyboardInset?: number
   /** Where a partially folded device divides the window; moved later with `publishFoldDivision`. */
   foldDivision?: BridgeFoldDivision | null
+  /** Where the side rail can start below the status column; moved later with `publishSideRailTop`. */
+  sideRailTop?: number | null
   // Read identity at forward time because this host outlives renders; replace the page placeholder as init promised or the desktop refuses spoofed sends.
   readClientIdentity: () => string | null
   // Read allowlisted storage synchronously for every init so document reloads include writes made since mount.

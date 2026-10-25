@@ -10,7 +10,7 @@ import {
   useReconnectAttempt
 } from '../transport/client-context-connection-metrics'
 import { useResponsiveLayout } from '../layout/responsive-layout'
-import { useFoldDivision } from '../layout/use-fold-division'
+import { useFoldDivision } from '../layout/use-window-regions'
 import { hostOs } from '../platform/host-os'
 import { resolveSessionSafeAreaInsets } from './session-safe-area-insets'
 import { useSideRailAvailable } from '../layout/side-rail'

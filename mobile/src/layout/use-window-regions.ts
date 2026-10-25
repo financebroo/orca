@@ -4,3 +4,8 @@ import type { FoldDivision } from './fold-division'
 export function useFoldDivision(): FoldDivision | null {
   return null
 }
+
+/** No platform but iOS reports an occluded status column yet. */
+export function useSideRailTop(): number | null {
+  return null
+}

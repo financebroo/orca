@@ -18,7 +18,7 @@ import { HostAreaServingContext } from '../../src/mobile-web-shell/host-area-ser
 import { usePageOwnsHostArea } from '../../src/mobile-web-shell/page-owns-host-area'
 import { isOverlayPageRoute } from '../../src/new-workspace/overlay-page-route'
 import { foldPosture, type FoldPosture } from '../../src/layout/fold-division'
-import { useFoldDivision } from '../../src/layout/use-fold-division'
+import { useFoldDivision } from '../../src/layout/use-window-regions'
 import { useWindowSafeAreaInsets } from '../../src/layout/side-safe-area'
 
 // Keep at least this much room for the detail pane when resizing the sidebar.

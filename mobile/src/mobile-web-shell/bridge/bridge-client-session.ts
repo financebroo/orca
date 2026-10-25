@@ -7,8 +7,6 @@ import type {
 import { ZERO_SAFE_AREA_INSETS, type BridgeSafeAreaInsets } from './bridge-safe-area-insets'
 import type { BridgeFoldDivision } from './bridge-fold-division'
 
-export type BridgeFoldDivisionListener = (division: BridgeFoldDivision | null) => void
-
 export type BridgeShellSession = {
   sessionId: string
   buildId: string
@@ -21,6 +19,8 @@ export type BridgeShellSession = {
   keyboardInset: number
   /** Where a partially folded device divides the window; null when flat or the shell is older. */
   foldDivision: BridgeFoldDivision | null
+  /** Where the side rail can start below the status column; null when unknown. */
+  sideRailTop: number | null
   host: BridgeInitHost | null
   storage: Readonly<Record<string, string>>
   // Oversize keys are withheld from storage and reject writes locally; older shells omit this additive field (ruling 33.6).
@@ -42,6 +42,7 @@ export function readShellSession(
     safeAreaInsets: message.safeAreaInsets ?? ZERO_SAFE_AREA_INSETS,
     keyboardInset: message.keyboardInset ?? 0,
     foldDivision: message.foldDivision ?? null,
+    sideRailTop: message.sideRailTop ?? null,
     host: message.host ?? null,
     storage: message.storage ?? {},
     storageOversize: message.storageOversize ?? [],

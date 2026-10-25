@@ -14,6 +14,7 @@ import {
   SideRailHost,
   useSideRailDrawnByScreen
 } from './side-rail'
+import { useSideRailTop } from './use-window-regions'
 
 const WindowSafeAreaInsetsContext = createContext<EdgeInsets | null>(null)
 
@@ -34,6 +35,8 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
   // Subscribed for the boolean alone, so a screen republishing its rail does not re-render the app.
   const railDrawnByScreen = useSideRailDrawnByScreen()
   const showRailColumn = railWidth > 0 && !railDrawnByScreen
+  // Below the status column when the platform measured it; otherwise from the top inset.
+  const railTop = Math.max(insets.top, useSideRailTop() ?? 0)
   const area = (
     <WindowSafeAreaInsetsContext.Provider value={insets}>
       <SafeAreaFrameContext.Provider value={areaFrame}>
@@ -66,7 +69,7 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
             styles.rail,
             {
               width: railWidth,
-              paddingTop: insets.top,
+              paddingTop: railTop,
               paddingBottom: insets.bottom
             }
           ]}

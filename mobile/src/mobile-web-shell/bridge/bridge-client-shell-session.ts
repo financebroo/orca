@@ -1,6 +1,6 @@
 import { readShellSession, type BridgeShellSession } from './bridge-client-session'
 import { bridgeRouteMoved } from './bridge-route-update'
-import { sameFoldDivision, type BridgeFoldDivision } from './bridge-fold-division'
+import { sameFoldDivision } from './bridge-fold-division'
 import {
   sameSafeAreaInsets,
   ZERO_SAFE_AREA_INSETS,
@@ -22,8 +22,8 @@ export type BridgeClientShellSession = {
   onRouteUpdate: (listener: (route: BridgeInitRoute | null) => void) => () => void
   onSafeAreaInsetsUpdate: (listener: (insets: BridgeSafeAreaInsets) => void) => () => void
   onKeyboardInsetUpdate: (listener: (height: number) => void) => () => void
-  /** Fires when an `init` moved the fold division the page holds, including a replacement's. */
-  onFoldDivisionUpdate: (listener: (division: BridgeFoldDivision | null) => void) => () => void
+  /** Fires when an `init` moved the fold division or side rail top; the values are on `current`. */
+  onWindowRegionsUpdate: (listener: () => void) => () => void
   close: () => void
 }
 
@@ -36,7 +36,7 @@ export function createBridgeClientShellSession(args: {
   const routeUpdateListeners = new Set<(route: BridgeInitRoute | null) => void>()
   const insetsListeners = new Set<(insets: BridgeSafeAreaInsets) => void>()
   const keyboardListeners = new Set<(height: number) => void>()
-  const foldListeners = new Set<(division: BridgeFoldDivision | null) => void>()
+  const regionsListeners = new Set<() => void>()
 
   return {
     current: () => session,
@@ -56,15 +56,18 @@ export function createBridgeClientShellSession(args: {
       const sentFold = message.foldDivision ?? null
       const movedFold = held !== null && !sameFoldDivision(held.foldDivision, sentFold)
       const foldDivision = held === null || movedFold ? sentFold : held.foldDivision
+      const sideRailTop = message.sideRailTop ?? null
+      const movedRailTop = held !== null && held.sideRailTop !== sideRailTop
       session =
         update === null
-          ? { ...readShellSession(message), safeAreaInsets, foldDivision }
+          ? { ...readShellSession(message), safeAreaInsets, foldDivision, sideRailTop }
           : {
               ...update,
               route: message.route ?? null,
               safeAreaInsets,
               keyboardInset,
-              foldDivision
+              foldDivision,
+              sideRailTop
             }
       // Reprime on every init to repair refused stale generations after client rebuild; identical pane-update snapshots emit no transition.
       args.prime(message.connection)
@@ -82,9 +85,9 @@ export function createBridgeClientShellSession(args: {
           listener(keyboardInset)
         }
       }
-      if (movedFold) {
-        for (const listener of foldListeners) {
-          listener(foldDivision)
+      if (movedFold || movedRailTop) {
+        for (const listener of regionsListeners) {
+          listener()
         }
       }
       // Publish only changed routes; repeated ready used for state repair must not retrigger the current pane.
@@ -124,10 +127,10 @@ export function createBridgeClientShellSession(args: {
         keyboardListeners.delete(listener)
       }
     },
-    onFoldDivisionUpdate: (listener) => {
-      foldListeners.add(listener)
+    onWindowRegionsUpdate: (listener) => {
+      regionsListeners.add(listener)
       return () => {
-        foldListeners.delete(listener)
+        regionsListeners.delete(listener)
       }
     },
     close: () => {

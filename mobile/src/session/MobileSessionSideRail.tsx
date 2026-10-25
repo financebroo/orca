@@ -1,8 +1,10 @@
-import { StyleSheet, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { ChevronDown, Keyboard as KeyboardIcon } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
 import { SIDE_RAIL_DRAWN_BY_SCREEN, useSideRailContent } from '../layout/side-rail'
+import { styles as sessionStyles } from './mobile-session-styles'
+import { MobileSessionAccessoryKeys } from './MobileSessionAccessoryKeys'
 import { MobileSessionPanelActions } from './MobileSessionPanelActions'
-import { MobileSessionTerminalInputActions } from './MobileSessionTerminalInputActions'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 function MobileSessionSideRail({ controller }: { controller: MobileSessionController }) {
@@ -16,10 +18,12 @@ function MobileSessionSideRail({ controller }: { controller: MobileSessionContro
     activeMarkdownTab,
     activeFileTab,
     activeBrowserTab,
-    showNativeChat
+    showNativeChat,
+    keyboardLift,
+    dismissSoftwareKeyboard
   } = controller
-  // Same condition as MobileSessionCommandDock: input actions only while its input bar shows.
-  const showInputActions =
+  // Same condition as MobileSessionCommandDock: the terminal's keys only while its dock shows.
+  const showTerminalKeys =
     !activeMarkdownTab && !activeFileTab && !activeBrowserTab && !showNativeChat
   return (
     <View style={styles.rail}>
@@ -31,18 +35,48 @@ function MobileSessionSideRail({ controller }: { controller: MobileSessionContro
         handlePanelTap={handlePanelTap}
         setShowHeaderMoreActions={setShowHeaderMoreActions}
       />
-      {showInputActions ? (
+      {showTerminalKeys ? (
         <>
           <View style={styles.divider} />
-          <MobileSessionTerminalInputActions controller={controller} inRail />
+          {keyboardLift > 0 ? (
+            <Pressable
+              style={({ pressed }) => [
+                sessionStyles.accessoryKey,
+                styles.key,
+                pressed && sessionStyles.accessoryKeyPressed
+              ]}
+              onPress={dismissSoftwareKeyboard}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss keyboard"
+            >
+              <View style={sessionStyles.keyboardDismissGlyph}>
+                <KeyboardIcon size={15} color={colors.textSecondary} strokeWidth={2} />
+                <ChevronDown
+                  size={10}
+                  color={colors.textSecondary}
+                  strokeWidth={2.5}
+                  style={sessionStyles.keyboardDismissChevron}
+                />
+              </View>
+            </Pressable>
+          ) : null}
+          {/* Why: default tap handling makes the first key tap dismiss the keyboard and get swallowed (#5106). */}
+          <ScrollView
+            style={styles.keys}
+            contentContainerStyle={styles.keysContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="always"
+          >
+            <MobileSessionAccessoryKeys controller={controller} inRail />
+          </ScrollView>
         </>
       ) : null}
     </View>
   )
 }
 
-/** Unfolded, moves the session's header and input actions into the side rail; folded, takes the
- *  rail's column for full-width content (the header pads for the status column itself). */
+/** Unfolded, moves the session's panel actions and terminal keys into the side rail; folded,
+ *  takes the rail's column for full-width content (the header pads for the status column). */
 export function usePublishMobileSessionSideRail(controller: MobileSessionController): void {
   const mode = controller.sessionSideRail
   useSideRailContent(
@@ -55,7 +89,10 @@ export function usePublishMobileSessionSideRail(controller: MobileSessionControl
 }
 
 const styles = StyleSheet.create({
+  // Fills the column below the status items; the keys scroll in what the panel actions leave.
   rail: {
+    flex: 1,
+    alignSelf: 'stretch',
     alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.sm
@@ -64,5 +101,19 @@ const styles = StyleSheet.create({
     width: 24,
     height: StyleSheet.hairlineWidth,
     backgroundColor: colors.borderSubtle
+  },
+  keys: {
+    flex: 1,
+    alignSelf: 'stretch'
+  },
+  keysContent: {
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm
+  },
+  key: {
+    alignSelf: 'stretch',
+    marginHorizontal: spacing.sm,
+    paddingVertical: spacing.sm + 2,
+    justifyContent: 'center'
   }
 })

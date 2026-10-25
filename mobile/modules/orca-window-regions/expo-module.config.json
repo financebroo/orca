@@ -1,6 +1,6 @@
 {
   "platforms": ["apple"],
   "apple": {
-    "modules": ["OrcaFoldDivisionModule"]
+    "modules": ["OrcaWindowRegionsModule"]
   }
 }
