@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react'
+import { useStackedFoldBand } from '../layout/use-stacked-fold-band'
 import { nativeChatTaskListPredecessors } from '../../../src/shared/native-chat-task-list-history'
 import {
   MobileNativeChatDisclosureContext,
@@ -196,6 +197,9 @@ export function MobileNativeChatView({
   keyboardInset = 0
 }: Props): React.JSX.Element {
   const insets = useSafeAreaInsets()
+  // Half folded laptop-style, the transcript ends at the hinge and the composer sits below it.
+  const foldBand = useStackedFoldBand()
+  const aboveFold = foldBand.top !== null ? { maxHeight: foldBand.top } : null
   const bottomPad = keyboardInset > 0 ? keyboardInset + insets.bottom : insets.bottom
   const { fontScale, pinchGesture } = useMobileNativeChatPinchGesture()
 
@@ -311,13 +315,17 @@ export function MobileNativeChatView({
   }
 
   return (
-    <View style={[styles.root, { paddingBottom: bottomPad }]}>
+    <View
+      ref={foldBand.ref}
+      onLayout={foldBand.onLayout}
+      style={[styles.root, { paddingBottom: bottomPad }]}
+    >
       {status === 'loading' && messages.length === 0 ? (
-        <View style={styles.center}>
+        <View style={[styles.center, aboveFold]}>
           <ActivityIndicator color={colors.textSecondary} />
         </View>
       ) : (
-        <GestureHandlerRootView style={styles.listWrap}>
+        <GestureHandlerRootView style={[styles.listWrap, aboveFold]}>
           <MobileNativeChatDisclosureContext.Provider value={disclosures}>
             <MobileNativeChatScrollRootsBoundary
               {...{ rowKeys, layoutKey }}

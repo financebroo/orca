@@ -17,6 +17,9 @@ import { HostSidebarRevealContext } from '../../src/layout/host-sidebar-reveal'
 import { HostAreaServingContext } from '../../src/mobile-web-shell/host-area-serving'
 import { usePageOwnsHostArea } from '../../src/mobile-web-shell/page-owns-host-area'
 import { isOverlayPageRoute } from '../../src/new-workspace/overlay-page-route'
+import { foldPosture, type FoldPosture } from '../../src/layout/fold-division'
+import { useFoldDivision } from '../../src/layout/use-fold-division'
+import { useWindowSafeAreaInsets } from '../../src/layout/side-safe-area'
 
 // Keep at least this much room for the detail pane when resizing the sidebar.
 const MIN_DETAIL_WIDTH = 320
@@ -31,9 +34,27 @@ function clampSidebarToWindow(width: number, windowWidth: number): number {
   return Math.min(hardMax, Math.max(HOST_SIDEBAR_MIN_WIDTH, Math.round(width)))
 }
 
+// Snaps the split to a book-style hinge when both panes still fit their minimums.
+function resolveHingeSplit(
+  posture: FoldPosture,
+  leftInset: number,
+  windowWidth: number
+): { sidebarWidth: number; hingeWidth: number } | null {
+  if (posture.kind !== 'sideBySide') {
+    return null
+  }
+  const sidebarWidth = posture.leftEnd - leftInset
+  const hingeWidth = posture.rightStart - posture.leftEnd
+  const fits =
+    sidebarWidth >= HOST_SIDEBAR_MIN_WIDTH &&
+    windowWidth - sidebarWidth - hingeWidth >= MIN_DETAIL_WIDTH
+  return fits ? { sidebarWidth, hingeWidth } : null
+}
+
 export default function HostGroupLayout() {
   // Wide layout = tablet/foldable canvas (see responsive-layout-metrics).
   const { isWideLayout, width: windowWidth } = useResponsiveLayout()
+  const windowInsets = useWindowSafeAreaInsets()
   const { hostId } = useGlobalSearchParams<{ hostId?: string }>()
   const pathname = usePathname()
   const overlayRoute = isOverlayPageRoute(pathname)
@@ -106,27 +127,44 @@ export default function HostGroupLayout() {
     })
   ).current
 
+  // Half folded book-style, the panes meet at the hinge instead of the dragged width.
+  const hingeSplit = resolveHingeSplit(
+    foldPosture(useFoldDivision()),
+    windowInsets.left,
+    windowWidth
+  )
+  const shownSidebarWidth = hingeSplit?.sidebarWidth ?? sidebarWidth
+
   // Keep detail Stack at a stable tree position so fold/rotation cannot remount navigation.
   return (
     <HostProtocolGate hostId={hostId} transparentWhilePending={overlayRoute}>
       <View style={[styles.row, overlayRoute && styles.transparent]}>
         {showSidebar && sidebarOpen ? (
-          <View style={[styles.sidebar, { width: sidebarWidth }]}>
+          <View style={[styles.sidebar, { width: shownSidebarWidth }]}>
             <HostScreen
               embedded
               hostId={hostId}
               onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
             />
             {/* Edge drag handle captures Android gestures above the list. */}
-            <View style={styles.resizeHandle} {...resizer.panHandlers} />
+            {hingeSplit ? null : <View style={styles.resizeHandle} {...resizer.panHandlers} />}
           </View>
         ) : null}
-        <View style={styles.detail}>
+        <View
+          style={[
+            styles.detail,
+            showSidebar && sidebarOpen && hingeSplit && { paddingLeft: hingeSplit.hingeWidth }
+          ]}
+        >
           <HostAreaServingContext.Provider value={setHostAreaServing}>
             <HostSidebarRevealContext.Provider
               value={showSidebar && !sidebarOpen ? revealSidebar : null}
             >
-              <HostStack animation={showSidebar ? 'none' : 'default'} />
+              {/* Why: the detail pane's swipe-back edge is the sidebar resize handle; a drag there popped the screen. */}
+              <HostStack
+                animation={showSidebar ? 'none' : 'default'}
+                gestureEnabled={!showSidebar}
+              />
             </HostSidebarRevealContext.Provider>
           </HostAreaServingContext.Provider>
         </View>

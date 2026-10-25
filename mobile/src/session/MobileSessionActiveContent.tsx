@@ -1,4 +1,5 @@
 import { Animated, View, Text, Pressable, ActivityIndicator } from 'react-native'
+import { useStackedFoldBand } from '../layout/use-stacked-fold-band'
 import { saveTerminalTextScale } from '../storage/preferences'
 import { MobileBrowserPane } from '../browser/MobileBrowserPane'
 import { TerminalPaneView } from './TerminalPaneView'
@@ -17,6 +18,7 @@ export function MobileSessionActiveContent({
   controller: MobileSessionController
 }) {
   const executionHost = useWorkspaceExecutionHost()
+  const foldBand = useStackedFoldBand()
   const {
     hostId,
     worktreeId,
@@ -205,38 +207,48 @@ export function MobileSessionActiveContent({
       )}
     </View>
   ) : (
-    <View style={styles.terminalFrame}>
-      {terminals.map((terminal) => (
-        <TerminalPaneView
-          key={terminal.handle}
-          handle={terminal.handle}
-          active={terminal.handle === activeHandle}
-          keyboardLift={terminal.handle === activeHandle ? activeTerminalKeyboardLift : 0}
-          terminalTheme={terminal.terminalTheme}
-          textScale={terminalTextScale}
-          onTextScaleChange={(scale) => {
-            // Why: pinch-to-zoom reports a new preset; persist it so the size sticks across panes and launches.
-            terminalTextScaleRevisionRef.current += 1
-            setTerminalTextScale(scale)
-            void saveTerminalTextScale(scale)
-          }}
-          onRef={setTerminalWebViewRef}
-          onWebReady={handleTerminalWebReady}
-          onCellBoxChange={notifyTerminalCellBoxChange}
-          onSelectionMode={handleSelectionMode}
-          onSelectionCopy={handleSelectionCopy}
-          onSelectionEvicted={handleSelectionEvicted}
-          onClipboardWrite={handleClipboardWrite}
-          onModesChanged={handleModesChanged}
-          onKeyboardAvoidanceMetrics={handleKeyboardAvoidanceMetrics}
-          onHaptic={handleHaptic}
-          onTerminalInput={handleTerminalInput}
-          onTerminalQueryReply={handleTerminalQueryReply}
-          onTerminalTap={handleTerminalTap}
-          onFileTap={handleFileTap}
-          onOpenUrl={handleTerminalOpenUrl}
-        />
-      ))}
+    <View ref={foldBand.ref} onLayout={foldBand.onLayout} style={styles.terminalFrame}>
+      {/* Folded, the status column overlays the top right; the grid stays clear while chat runs full width.
+          Half folded laptop-style, the grid ends at the hinge and the input stays below it. */}
+      <View
+        style={[
+          styles.terminalPaneArea,
+          controller.sessionSideRail === 'fullWidth' && { right: controller.statusColumnWidth },
+          foldBand.top !== null && { bottom: foldBand.height - foldBand.top }
+        ]}
+      >
+        {terminals.map((terminal) => (
+          <TerminalPaneView
+            key={terminal.handle}
+            handle={terminal.handle}
+            active={terminal.handle === activeHandle}
+            keyboardLift={terminal.handle === activeHandle ? activeTerminalKeyboardLift : 0}
+            terminalTheme={terminal.terminalTheme}
+            textScale={terminalTextScale}
+            onTextScaleChange={(scale) => {
+              // Why: pinch-to-zoom reports a new preset; persist it so the size sticks across panes and launches.
+              terminalTextScaleRevisionRef.current += 1
+              setTerminalTextScale(scale)
+              void saveTerminalTextScale(scale)
+            }}
+            onRef={setTerminalWebViewRef}
+            onWebReady={handleTerminalWebReady}
+            onCellBoxChange={notifyTerminalCellBoxChange}
+            onSelectionMode={handleSelectionMode}
+            onSelectionCopy={handleSelectionCopy}
+            onSelectionEvicted={handleSelectionEvicted}
+            onClipboardWrite={handleClipboardWrite}
+            onModesChanged={handleModesChanged}
+            onKeyboardAvoidanceMetrics={handleKeyboardAvoidanceMetrics}
+            onHaptic={handleHaptic}
+            onTerminalInput={handleTerminalInput}
+            onTerminalQueryReply={handleTerminalQueryReply}
+            onTerminalTap={handleTerminalTap}
+            onFileTap={handleFileTap}
+            onOpenUrl={handleTerminalOpenUrl}
+          />
+        ))}
+      </View>
       <MobileNativeChatOverlay
         controller={nativeChatController}
         activeSessionTabId={controller.activeSessionTab?.id}

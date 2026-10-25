@@ -1,4 +1,5 @@
 import { BridgeInitRouteSchema, type BridgeInitRoute } from './bridge/bridge-envelope'
+import { sameFoldDivision, type BridgeFoldDivision } from './bridge/bridge-fold-division'
 import { readBridgeRouteUpdate } from './bridge/bridge-route-update'
 import {
   sameSafeAreaInsets,
@@ -16,6 +17,10 @@ export type BridgeHostRoute = {
   readonly publishSafeAreaInsets: (next: BridgeSafeAreaInsets, deliverable: boolean) => void
   readonly keyboardInset: () => number
   readonly publishKeyboardInset: (next: number, deliverable: boolean) => void
+  /** The fold division the next `init` carries. */
+  readonly foldDivision: () => BridgeFoldDivision | null
+  /** Moves the held fold division on the same lane as the insets. */
+  readonly publishFoldDivision: (next: BridgeFoldDivision | null, deliverable: boolean) => void
 }
 
 // Parse against the page’s route schema before init; interpolated host ids with query/hash/whitespace/dot segments could otherwise leave a blank page asking forever.
@@ -27,11 +32,13 @@ export function createBridgeHostRoute(args: {
   onRefused: (issue: string) => void
   safeAreaInsets?: BridgeSafeAreaInsets
   keyboardInset?: number
+  foldDivision?: BridgeFoldDivision | null
 }): BridgeHostRoute {
   const parsed = BridgeInitRouteSchema.safeParse(args.opened)
   let route = parsed.success && !args.refused ? parsed.data : null
   let insets = args.safeAreaInsets ?? ZERO_SAFE_AREA_INSETS
   let keyboard = args.keyboardInset ?? 0
+  let fold = args.foldDivision ?? null
   return {
     current: () => route,
     openIssue: () => (parsed.success ? 'unknown' : (parsed.error.issues[0]?.message ?? 'unknown')),
@@ -62,6 +69,16 @@ export function createBridgeHostRoute(args: {
         return
       }
       keyboard = next
+      if (deliverable) {
+        args.sendInit()
+      }
+    },
+    foldDivision: () => fold,
+    publishFoldDivision: (next, deliverable) => {
+      if (sameFoldDivision(fold, next)) {
+        return
+      }
+      fold = next
       if (deliverable) {
         args.sendInit()
       }

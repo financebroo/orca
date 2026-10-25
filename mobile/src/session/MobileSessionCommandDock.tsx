@@ -16,7 +16,7 @@ import {
   getTerminalLiveInputKeyboardType
 } from '../terminal/terminal-keyboard-type'
 import { MobileTerminalLiveInputStatus } from './MobileTerminalLiveInputStatus'
-import { MobileTerminalInputActions } from './MobileTerminalInputActions'
+import { MobileSessionTerminalInputActions } from './MobileSessionTerminalInputActions'
 import { keepHeldPressThroughLongPress } from './held-press-long-press'
 import { isTerminalPhoneDisplayMode } from './mobile-session-route-helpers'
 import { colors } from '../theme/mobile-theme'
@@ -37,8 +37,6 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     visibleBuiltInAccessoryKeys,
     terminalModes,
     canPaste,
-    dictationMode,
-    dictationEnabled,
     bindCommandField,
     handleLiveInputChange,
     handleLiveInputKeyPress,
@@ -50,10 +48,6 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     focusLiveInput,
     showNativeChat,
     dictation,
-    cancelDictation,
-    handleDictationToggle,
-    handleDictationPressIn,
-    handleDictationPressOut,
     toggleDisplayMode,
     handleSend,
     handleAccessoryKey,
@@ -63,13 +57,13 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     startAccessoryRepeat,
     handlePaste,
     isAttaching,
-    attachImage,
     activeMarkdownTab,
     activeFileTab,
     activeBrowserTab,
     keyboardLift
   } = controller
   const accessoryBarKeepsKeyboard = useKeyboardPersistingTaps('always')
+  const actionsInRail = controller.sessionSideRail === 'actions'
   return (
     !activeMarkdownTab &&
     !activeFileTab &&
@@ -279,22 +273,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
                 liveInputText={liveInputCapture}
               />
             </Pressable>
-            <MobileTerminalInputActions
-              canSend={canSend}
-              isAttaching={isAttaching}
-              dictation={dictation}
-              dictationMode={dictationMode}
-              dictationEnabled={dictationEnabled}
-              buttonStyle={styles.dictationButton}
-              activeButtonStyle={styles.dictationButtonActive}
-              disabledButtonStyle={styles.sendButtonDisabled}
-              onAttachImage={() => void attachImage('library')}
-              onAttachFile={() => void attachImage('files')}
-              onDictationToggle={handleDictationToggle}
-              onDictationPressIn={handleDictationPressIn}
-              onDictationPressOut={handleDictationPressOut}
-              onDictationCancel={cancelDictation}
-            />
+            {/* The side rail hosts these when the window has one. */}
+            {actionsInRail ? null : <MobileSessionTerminalInputActions controller={controller} />}
             <TextInput
               ref={bindLiveInputField}
               style={styles.liveInputCapture}
@@ -348,22 +328,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               editable={canCompose}
               onSubmitEditing={() => void handleSend()}
             />
-            <MobileTerminalInputActions
-              canSend={canSend}
-              isAttaching={isAttaching}
-              dictation={dictation}
-              dictationMode={dictationMode}
-              dictationEnabled={dictationEnabled}
-              buttonStyle={styles.dictationButton}
-              activeButtonStyle={styles.dictationButtonActive}
-              disabledButtonStyle={styles.sendButtonDisabled}
-              onAttachImage={() => void attachImage('library')}
-              onAttachFile={() => void attachImage('files')}
-              onDictationToggle={handleDictationToggle}
-              onDictationPressIn={handleDictationPressIn}
-              onDictationPressOut={handleDictationPressOut}
-              onDictationCancel={cancelDictation}
-            />
+            {/* The side rail hosts these when the window has one. */}
+            {actionsInRail ? null : <MobileSessionTerminalInputActions controller={controller} />}
             <Pressable
               style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
               disabled={!canSend}

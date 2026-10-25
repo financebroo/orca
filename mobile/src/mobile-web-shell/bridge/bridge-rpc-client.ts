@@ -9,7 +9,7 @@ import {
 import { BridgeConnectionCache } from './bridge-client-connection-cache'
 import type { BridgeRpcClientDiagnostic } from './bridge-client-diagnostics'
 import { createBridgeClientShellSession } from './bridge-client-shell-session'
-import type { BridgeShellSession } from './bridge-client-session'
+import type { BridgeFoldDivisionListener, BridgeShellSession } from './bridge-client-session'
 import { createBridgeInitHandshake, createPageReadyFrame } from './bridge-client-init-handshake'
 import {
   BridgeClientCapExceededError,
@@ -68,6 +68,8 @@ export type BridgeRpcClient = RpcClient & {
   onRouteUpdate: (listener: (route: BridgeInitRoute | null) => void) => () => void
   onSafeAreaInsetsUpdate: (listener: (insets: BridgeSafeAreaInsets) => void) => () => void
   onKeyboardInsetUpdate: (listener: (height: number) => void) => () => void
+  /** Fires when an `init` moved the fold division; the value itself is on `getShellSession`. */
+  onFoldDivisionUpdate: (listener: BridgeFoldDivisionListener) => () => void
   getShellSession: () => BridgeShellSession | null
   // False without navigate lets tap handlers fall back safely instead of throwing into uncaught UI callbacks.
   notifyNavigate: (href: string) => boolean
@@ -341,6 +343,7 @@ export function createBridgeRpcClient(options: BridgeRpcClientOptions): BridgeRp
     onRouteUpdate: shellSession.onRouteUpdate,
     onSafeAreaInsetsUpdate: shellSession.onSafeAreaInsetsUpdate,
     onKeyboardInsetUpdate: shellSession.onKeyboardInsetUpdate,
+    onFoldDivisionUpdate: shellSession.onFoldDivisionUpdate,
     getShellSession: shellSession.current,
     clearRouteParam: (param, value) =>
       posted({
