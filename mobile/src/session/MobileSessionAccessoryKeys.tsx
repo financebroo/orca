@@ -170,8 +170,10 @@ export function MobileSessionAccessoryKeys({
 
 const railStyles = StyleSheet.create({
   // A column of full-width keys, each a comfortable tap target.
+  // Slim side padding so the longest built-in label (Shift+Tab) fits the 84pt column.
   key: {
     alignSelf: 'stretch',
+    paddingHorizontal: 2,
     paddingVertical: spacing.sm + 2,
     justifyContent: 'center'
   }

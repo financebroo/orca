@@ -108,11 +108,11 @@ const styles = StyleSheet.create({
   },
   keysContent: {
     gap: spacing.xs,
-    paddingHorizontal: spacing.sm
+    paddingHorizontal: spacing.xs
   },
   key: {
     alignSelf: 'stretch',
-    marginHorizontal: spacing.sm,
+    marginHorizontal: spacing.xs,
     paddingVertical: spacing.sm + 2,
     justifyContent: 'center'
   }
