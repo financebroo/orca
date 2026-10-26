@@ -308,6 +308,7 @@ export function MobileSessionActiveContent({
         getSendCompletionGeneration={controller.getSendCompletionGeneration}
         keyboardInset={keyboardLift}
         bottomInset={insets.bottom}
+        fitScreenCorners={controller.sessionSideRail === 'fullWidth'}
       />
       {toastMessage && (
         <Animated.View pointerEvents="none" style={[styles.toast, toastAnimatedStyle]}>
