@@ -227,7 +227,6 @@ export function useTerminalLivePendingInputFlush<TTabType extends string>({
           })
         )
         if (payload.length > 0) {
-          predictLiveInput?.(handle, payload)
           void queueTerminalLiveMirrorSend(flushState, handle, payload, sendQueuedMirrorPayload)
         }
       }
@@ -243,7 +242,6 @@ export function useTerminalLivePendingInputFlush<TTabType extends string>({
     [
       clearHeldCommitTimer,
       liveInputRef,
-      predictLiveInput,
       queueLiveInputControl,
       sendQueuedMirrorPayload,
       setLiveInputCapture
