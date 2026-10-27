@@ -14,13 +14,15 @@ import type { HostProfile } from '../transport/types'
 export function MobileHomeAccountUsageCards(props: {
   items: { host: HostProfile; snapshot: AccountsSnapshot }[]
   onOpen: (hostId: string) => void
+  /** Inside the unfolded split's Activity container: no heading or card chrome of its own. */
+  embedded?: boolean
 }) {
   if (props.items.length === 0) {
     return null
   }
   return (
     <>
-      <Text style={styles.sectionHeading}>Account usage</Text>
+      {props.embedded ? null : <Text style={styles.sectionHeading}>Account usage</Text>}
       {props.items.map(({ host, snapshot }) => {
         const claudeActive =
           snapshot.claude.accounts.find(
@@ -33,7 +35,10 @@ export function MobileHomeAccountUsageCards(props: {
         return (
           <Pressable
             key={host.id}
-            style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+            style={({ pressed }) => [
+              props.embedded ? styles.embeddedCard : styles.card,
+              pressed && styles.cardPressed
+            ]}
             onPress={() => props.onOpen(host.id)}
           >
             {props.items.length > 1 ? (
@@ -110,6 +115,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     marginBottom: spacing.sm
   },
+  embeddedCard: { gap: spacing.sm, paddingVertical: spacing.xs, borderRadius: radii.row },
   cardPressed: { backgroundColor: colors.bgRaised },
   hostLabel: {
     fontSize: 11,

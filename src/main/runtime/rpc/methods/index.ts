@@ -20,6 +20,7 @@ import { BROWSER_NETWORK_TUNNEL_METHODS } from './browser-network-tunnel'
 import { ORCHESTRATION_METHODS } from './orchestration'
 import { NOTIFICATION_METHODS } from './notifications'
 import { STATS_METHODS } from './stats'
+import { USAGE_METHODS } from './usage'
 import { DIAGNOSTICS_METHODS } from './diagnostics'
 import { TERMINAL_DAEMON_METHODS } from './terminal-daemon'
 import { ACCOUNT_METHODS } from './accounts'
@@ -106,6 +107,7 @@ export const ALL_RPC_METHODS = [
   ...ORCHESTRATION_METHODS,
   ...NOTIFICATION_METHODS,
   ...STATS_METHODS,
+  ...USAGE_METHODS,
   ...DIAGNOSTICS_METHODS,
   ...TERMINAL_DAEMON_METHODS,
   ...ACCOUNT_METHODS,
