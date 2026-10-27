@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createTerminalDocumentScope } from './document-scope'
 import { terminalDocumentDouble } from './document-terminal-double.test-support'
-import { predictLocalEcho, reconcileLocalEcho, resetLocalEcho } from './local-echo'
+import { forgetLocalEcho, predictLocalEcho, reconcileLocalEcho, resetLocalEcho } from './local-echo'
 
 // Claude Code's prompt row: "❯ " then the typed text, real cursor right after it (checked in tmux, 2026-10-27).
 function createEchoScope() {
@@ -112,6 +112,29 @@ describe('local echo', () => {
     predictLocalEcho(scope, 'a')
     hostEcho('a')
     predictLocalEcho(scope, '\r')
+    expect(scope.localEchoTrustedRow).toBeNull()
+  })
+
+  it('expires by the oldest guess even while typing continues', () => {
+    vi.useFakeTimers()
+    const { scope, hostEcho } = createEchoScope()
+    predictLocalEcho(scope, 'a')
+    hostEcho('a')
+    // Echo stops on a trusted row; steady typing must not keep the first guess alive.
+    predictLocalEcho(scope, 'b')
+    vi.advanceTimersByTime(1000)
+    predictLocalEcho(scope, 'c')
+    vi.advanceTimersByTime(500)
+    expect(scope.localEchoPending).toEqual([])
+    expect(scope.localEchoTrustedRow).toBeNull()
+  })
+
+  it('forgets row trust when the terminal content is replaced', () => {
+    const { scope, hostEcho } = createEchoScope()
+    predictLocalEcho(scope, 'a')
+    hostEcho('a')
+    expect(scope.localEchoTrustedRow).toBe(0)
+    forgetLocalEcho(scope)
     expect(scope.localEchoTrustedRow).toBeNull()
   })
 

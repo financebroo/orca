@@ -97,6 +97,8 @@ export type TerminalDocumentState = {
   bottomRowBackdrop: string
   // Typed chars drawn ahead of the host echo, anchored at the cursor cell when the first was typed.
   localEchoPending: string[]
+  // Date.now() of each pending guess, parallel to localEchoPending.
+  localEchoTimes: number[]
   localEchoAnchor: { col: number; row: number } | null
   localEchoTimer: ReturnType<typeof setTimeout> | null
   localEchoTrustedRow: number | null
@@ -217,6 +219,7 @@ function createTerminalDocumentState(): TerminalDocumentState {
     wheelAccumDeltaY: 0,
     bottomRowBackdrop: '',
     localEchoPending: [],
+    localEchoTimes: [],
     localEchoAnchor: null,
     localEchoTimer: null,
     localEchoTrustedRow: null,

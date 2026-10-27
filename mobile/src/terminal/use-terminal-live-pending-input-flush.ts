@@ -199,6 +199,8 @@ export function useTerminalLivePendingInputFlush<TTabType extends string>({
     (handle: string, bytes: string): Promise<boolean> => {
       // Own the queued bytes so a terminal switch retires them even with an empty field.
       pendingLiveInputHandleRef.current = handle
+      // Controls skip send-time prediction like mirror bytes, so drop local echo trust here.
+      predictLiveInput?.(handle, bytes)
       return queueTerminalLiveControlSend(
         pendingLiveInputFlushRef.current,
         handle,
@@ -206,7 +208,7 @@ export function useTerminalLivePendingInputFlush<TTabType extends string>({
         sendQueuedMirrorPayload
       )
     },
-    [sendQueuedMirrorPayload]
+    [predictLiveInput, sendQueuedMirrorPayload]
   )
 
   // Queue held text and the control synchronously so the next keystroke follows them.

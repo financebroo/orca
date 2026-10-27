@@ -29,6 +29,7 @@ export function resetLocalEcho(scope: TerminalDocumentScope) {
     return
   }
   scope.localEchoPending = []
+  scope.localEchoTimes = []
   scope.localEchoAnchor = null
   if (scope.localEchoTimer) {
     clearTimeout(scope.localEchoTimer)
@@ -37,16 +38,26 @@ export function resetLocalEcho(scope: TerminalDocumentScope) {
   paintLocalEcho(scope)
 }
 
+// Replaced content (init, resize, reflow, clear) may put a no-echo prompt on a row trusted before it.
+export function forgetLocalEcho(scope: TerminalDocumentScope) {
+  scope.localEchoTrustedRow = null
+  resetLocalEcho(scope)
+}
+
+// Expire by the oldest pending guess; restarting per keystroke would keep an unechoed first char on screen.
 function armTimeout(scope: TerminalDocumentScope) {
   if (scope.localEchoTimer) {
     clearTimeout(scope.localEchoTimer)
   }
-  scope.localEchoTimer = setTimeout(function () {
-    scope.localEchoTimer = null
-    // A missed echo may be a no-echo password prompt; show nothing until echo is seen again.
-    scope.localEchoTrustedRow = null
-    resetLocalEcho(scope)
-  }, LOCAL_ECHO_TIMEOUT_MS)
+  const oldest = scope.localEchoTimes[0] ?? Date.now()
+  scope.localEchoTimer = setTimeout(
+    function () {
+      scope.localEchoTimer = null
+      // A missed echo may be a no-echo password prompt; show nothing until echo is seen again.
+      forgetLocalEcho(scope)
+    },
+    Math.max(0, oldest + LOCAL_ECHO_TIMEOUT_MS - Date.now())
+  )
 }
 
 // Draw typed text at the cursor before the host echo arrives; the xterm buffer is never touched.
@@ -61,13 +72,13 @@ export function predictLocalEcho(scope: TerminalDocumentScope, data: string) {
     const ch = chars[i]
     if (ch === DEL && scope.localEchoPending.length > 0) {
       scope.localEchoPending.pop()
+      scope.localEchoTimes.pop()
       continue
     }
     // Erasing already-echoed text or any control byte moves the cursor in ways only the host knows.
     if (!isPredictable(ch)) {
       // Enter or a control key may open a no-echo prompt on this same row; re-earn trust per line.
-      scope.localEchoTrustedRow = null
-      return resetLocalEcho(scope)
+      return forgetLocalEcho(scope)
     }
     if (scope.localEchoPending.length === 0) {
       scope.localEchoAnchor = cursorCell(scope)
@@ -77,6 +88,7 @@ export function predictLocalEcho(scope: TerminalDocumentScope, data: string) {
       break
     }
     scope.localEchoPending.push(ch)
+    scope.localEchoTimes.push(Date.now())
   }
   if (scope.localEchoPending.length > 0) {
     armTimeout(scope)
@@ -109,6 +121,7 @@ export function reconcileLocalEcho(scope: TerminalDocumentScope) {
   if (confirmed > 0) {
     scope.localEchoTrustedRow = anchor.row
     scope.localEchoPending = scope.localEchoPending.slice(confirmed)
+    scope.localEchoTimes = scope.localEchoTimes.slice(confirmed)
     anchor.col += confirmed
     if (scope.localEchoPending.length === 0) {
       return resetLocalEcho(scope)
