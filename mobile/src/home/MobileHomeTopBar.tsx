@@ -3,12 +3,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { OrcaLogo } from '../components/OrcaLogo'
 import { colors, spacing } from '../theme/mobile-theme'
 
-/** `onRefresh` adds the Stats & Usage refresh beside the gear (wide two-column home). */
+/**
+ * `onRefresh` adds the Stats & Usage refresh beside the gear (two-column home). No
+ * `onOpenSettings` hides the gear: unfolded landscape moves both into the side rail.
+ */
 export function MobileHomeTopBar({
   onOpenSettings,
   onRefresh
 }: {
-  onOpenSettings: () => void
+  onOpenSettings?: () => void
   onRefresh?: () => void
 }) {
   return (
@@ -31,15 +34,17 @@ export function MobileHomeTopBar({
             <RefreshCw size={18} color={colors.textSecondary} />
           </Pressable>
         ) : null}
-        <Pressable
-          style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
-          onPress={onOpenSettings}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Settings"
-        >
-          <Settings size={18} color={colors.textSecondary} />
-        </Pressable>
+        {onOpenSettings ? (
+          <Pressable
+            style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
+            onPress={onOpenSettings}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Settings"
+          >
+            <Settings size={18} color={colors.textSecondary} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   )

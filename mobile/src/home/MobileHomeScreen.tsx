@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { useFocusEffect } from 'expo-router'
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOpenMobileAccounts } from '../accounts/use-open-mobile-accounts'
@@ -8,6 +9,7 @@ import { ConfirmModal } from '../components/ConfirmModal'
 import { getHostListActionSheetActions } from '../host-list-action-sheet-actions'
 import { hostRouteWithNotice } from '../host-route-notice'
 import { useResponsiveLayout } from '../layout/responsive-layout'
+import { useSideRailAvailable, useSideRailContent } from '../layout/side-rail'
 import { triggerMediumImpact } from '../platform/haptics'
 import { useOpenMobileSession } from '../session/use-open-mobile-session'
 import { useOpenMobileTasks } from '../tasks/use-open-mobile-tasks'
@@ -30,6 +32,7 @@ import { MobileHomeAccountUsageCards } from './MobileHomeAccountUsageCards'
 import { MobileHomeEmptyState } from './MobileHomeEmptyState'
 import { MobileHomeHostList } from './MobileHomeHostList'
 import { MobileHomeListFooter } from './MobileHomeListFooter'
+import { MobileHomeSideRail } from './MobileHomeSideRail'
 import { MobileHomeTopBar } from './MobileHomeTopBar'
 import { useMobileHomeData } from './use-mobile-home-data'
 import { newWorkspaceOverlayHref } from '../new-workspace/new-workspace-overlay-route'
@@ -44,6 +47,21 @@ export function MobileHomeScreen() {
   const [refreshKey, setRefreshKey] = useState(0)
   const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
   const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
+  const [focused, setFocused] = useState(true)
+  // Why: Home stays mounted under pushed screens; they must get the rail back.
+  useFocusEffect(
+    useCallback(() => {
+      setFocused(true)
+      return () => setFocused(false)
+    }, [])
+  )
+  // Unfolded Duo on its side: Settings and Refresh move into the side rail under the status items.
+  const actionsInRail = useSideRailAvailable() && splitColumns && focused
+  useSideRailContent(
+    actionsInRail ? (
+      <MobileHomeSideRail onOpenSettings={openSettings} onRefresh={refreshUsage} />
+    ) : null
+  )
   const openMobileHostEdit = useOpenMobileHostEdit()
   const openMobileTasks = useOpenMobileTasks()
   const openMobileSession = useOpenMobileSession()
@@ -162,8 +180,8 @@ export function MobileHomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <MobileHomeTopBar
-        onOpenSettings={openSettings}
-        onRefresh={splitColumns ? refreshUsage : undefined}
+        onOpenSettings={actionsInRail ? undefined : openSettings}
+        onRefresh={splitColumns && !actionsInRail ? refreshUsage : undefined}
       />
       {data.hostCatalog.length === 0 ? (
         <MobileHomeEmptyState
@@ -187,7 +205,7 @@ export function MobileHomeScreen() {
               client={statsClient}
               counters={data.stats}
               activityExtra={accountUsage}
-              // The top bar owns refresh in the split.
+              // The side rail (unfolded landscape) or the top bar owns refresh in the split.
               refreshKey={refreshKey}
             />
           </ScrollView>
