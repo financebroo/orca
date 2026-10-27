@@ -117,3 +117,19 @@ describe('tab strip edge hints', () => {
     expect(resolveTabStripEdgeHint(['1'], tabStates)).toBeNull()
   })
 })
+
+describe('snapping to a tab edge', () => {
+  it('stops on the next tab edge instead of showing a sliver of the tab before', () => {
+    // Tabs of 100 at 0,100,200,300; viewport 250. Revealing the last tab would stop at 162.
+    expect(
+      resolveTabStripScrollOffset({
+        tabX: 300,
+        tabWidth: 100,
+        viewportWidth: 250,
+        contentWidth: 528,
+        currentOffset: 0,
+        tabStarts: [0, 100, 200, 300]
+      })
+    ).toBe(200)
+  })
+})

@@ -130,7 +130,8 @@ export function useMobileSessionKeyboardState(scope: MobileSessionKeyboardScope)
       tabWidth: layout.width,
       viewportWidth: tabStripViewportWidthRef.current,
       contentWidth: tabStripContentWidthRef.current,
-      currentOffset: tabStripOffsetRef.current
+      currentOffset: tabStripOffsetRef.current,
+      tabStarts: [...tabLayoutsRef.current.values()].map((tab) => tab.x)
     })
     if (nextOffset !== tabStripOffsetRef.current) {
       tabStripOffsetRef.current = nextOffset

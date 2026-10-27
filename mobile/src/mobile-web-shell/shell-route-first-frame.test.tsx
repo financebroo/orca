@@ -32,7 +32,9 @@ vi.mock('@react-native-async-storage/async-storage', () => ({
 
 vi.mock('react-native', () => ({
   StyleSheet: { create: (styles: unknown) => styles },
-  View: 'View'
+  View: 'View',
+  // Phone-sized, so the route keeps its own page instead of handing off to the host page.
+  useWindowDimensions: () => ({ width: 390, height: 844 })
 }))
 
 vi.mock('../transport/host-client-hooks', () => ({

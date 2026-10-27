@@ -118,7 +118,7 @@ export const mobileSessionFrameStyles = StyleSheet.create({
     borderLeftColor: colors.borderSubtle
   },
   // iPhone Duo (2026-10-27): tabs 36pt with 12pt labels (were 44/13), and no 8pt lead-in before the
-  // first tab, which read as a stray gap beside the sidebar (owner's call).
+  // first tab, which read as a stray gap beside the sidebar.
   tabScroll: {
     flex: 1,
     maxHeight: 36
@@ -147,6 +147,8 @@ export const mobileSessionFrameStyles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: colors.borderSubtle
   },
+  // A tab's maximum width: the most a snap to a tab edge can overshoot the last tab.
+  tabSnapRoom: { width: 128 },
   tabFirst: {
     borderLeftWidth: 1,
     borderLeftColor: colors.borderSubtle

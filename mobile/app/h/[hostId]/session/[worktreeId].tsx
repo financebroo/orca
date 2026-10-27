@@ -3,7 +3,7 @@ import {
   useWorkspaceExecutionHost,
   workspaceRouteParams
 } from '../../../../src/navigation/workspace-execution-host'
-import { useCallback } from 'react'
+import { useCallback, useEffect } from 'react'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { firstParam } from '../../../../src/navigation/route-param-reader'
 import {
@@ -12,6 +12,8 @@ import {
 } from '../../../../src/mobile-web-shell/shell-screen-route'
 import { MobileWebShellScreen } from '../../../../src/mobile-web-shell/MobileWebShellScreen'
 import { PageRouteUnavailableScreen } from '../../../../src/mobile-web-shell/PageRouteUnavailableScreen'
+import { useResponsiveLayout } from '../../../../src/layout/responsive-layout'
+import { OPEN_SESSION_PARAM } from '../../../../src/session/use-open-mobile-session'
 
 // paneKey selects a tab within the current session, not a new identity; remounting on it reloads the page and loses repeated taps.
 // Deliver it as a route update via repeated init only to supporting pages, then clear the native param so later init cannot replay it (ruling 33.1).
@@ -30,6 +32,21 @@ export default withWorkspaceRoute(function MobileSessionScreen() {
   const executionHost = useWorkspaceExecutionHost()
   const router = useRouter()
   const paneKey = firstParam(params.paneKey) ?? ''
+  // iPhone Duo (2026-10-27): opened folded, this route stays put when the Duo unfolds, and its page then
+  // sits in the ~400pt pane beside the native sidebar with the phone layout (it showed the old phone header).
+  // Wide, the host page owns the whole area, so hand the session to it, as Home > Resume does.
+  const { isWideLayout } = useResponsiveLayout()
+  const name = firstParam(params.name)
+  const handToHostArea = isWideLayout && executionHost === undefined && paneKey === ''
+  useEffect(() => {
+    if (!handToHostArea || !hostId || !worktreeId) {
+      return
+    }
+    router.replace({
+      pathname: '/h/[hostId]',
+      params: { hostId, [OPEN_SESSION_PARAM]: worktreeId, ...(name ? { name } : {}) }
+    })
+  }, [handToHostArea, hostId, name, router, worktreeId])
   // Clear only the paneKey the page applied; a newer tap must survive. Empty equals absent in the route builder (ruling 34).
   const erasePaneKey = useCallback(
     (param: 'paneKey', value: string) => {

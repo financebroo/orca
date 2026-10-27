@@ -7,6 +7,8 @@ export type TabStripScrollInput = {
   contentWidth: number
   currentOffset: number
   margin?: number
+  /** Left edges of every tab; when given, the strip stops on one (no sliver of the tab before). */
+  tabStarts?: readonly number[]
 }
 
 export function resolveTabStripScrollOffset({
@@ -15,7 +17,8 @@ export function resolveTabStripScrollOffset({
   viewportWidth,
   contentWidth,
   currentOffset,
-  margin = 12
+  margin = 12,
+  tabStarts
 }: TabStripScrollInput): number {
   const maxOffset = Math.max(0, contentWidth - viewportWidth)
   if (viewportWidth <= 0) {
@@ -32,6 +35,15 @@ export function resolveTabStripScrollOffset({
     nextOffset = tabStart - margin
   } else if (tabEnd > visibleEnd - margin) {
     nextOffset = tabEnd + margin - viewportWidth
+  }
+
+  // iPhone Duo (2026-10-27): stopping mid-tab left a sliver of the tab before at the strip's left edge,
+  // which read as a gap. Snap forward to the next tab edge, never past the active tab's own.
+  if (tabStarts && nextOffset !== currentOffset && nextOffset > 0) {
+    const edge = tabStarts.filter((start) => start >= nextOffset && start <= tabStart)
+    if (edge.length > 0) {
+      nextOffset = Math.min(...edge)
+    }
   }
 
   return Math.min(Math.max(0, nextOffset), maxOffset)

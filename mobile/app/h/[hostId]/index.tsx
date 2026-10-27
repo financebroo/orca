@@ -7,12 +7,26 @@ import { PageRouteUnavailableScreen } from '../../../src/mobile-web-shell/PageRo
 // Encode decoded hostId so ?, # and whitespace cannot form a pathname the page refuses; shell gates unsupported bundles.
 function HostListScreen() {
   // Use firstParam: encoding String(array) creates a valid segment naming a nonexistent host; an empty array is truthy and otherwise builds /h/.
-  const params = useLocalSearchParams<{ hostId?: string | string[] }>()
+  const params = useLocalSearchParams<{
+    hostId?: string | string[]
+    openSession?: string | string[]
+    name?: string | string[]
+  }>()
   const hostId = firstParam(params.hostId)
+  // iPhone Duo (2026-10-27): a session opened natively on the wide layout arrives here for the page to open.
+  const openSession = firstParam(params.openSession)
+  const name = firstParam(params.name)
 
   // Validate through bridge schema: encoding cannot make dot/dot-dot host ids valid.
   const route =
-    hostId === '' ? null : shellScreenRoute({ pathname: `/h/${encodeURIComponent(hostId)}` })
+    hostId === ''
+      ? null
+      : shellScreenRoute({
+          pathname: `/h/${encodeURIComponent(hostId)}`,
+          ...(openSession === ''
+            ? {}
+            : { params: { openSession, ...(name === '' ? {} : { name }) } })
+        })
   if (route === null) {
     return <PageRouteUnavailableScreen hostId={hostId} />
   }

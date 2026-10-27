@@ -308,7 +308,9 @@ describeBundling('the app bundle', () => {
   it('declares no viewport-fit, because the shell owns the safe area', async () => {
     const { html } = await readWrittenBundle()
     // Shell already pads the WebView; page cover would invite duplicate safe-area padding.
-    expect(html).toContain('<meta name="viewport" content="width=device-width, initial-scale=1" />')
+    expect(html).toContain(
+      '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />'
+    )
     expect(html).not.toContain('viewport-fit')
   }, 120_000)
 

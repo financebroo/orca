@@ -261,6 +261,8 @@ export function MobileSessionTabStrip({
               </Pressable>
             )
           })}
+          {/* Room for the strip to stop on a tab edge when the last tab is active (tab-strip-scroll). */}
+          {isWideLayout ? <View style={styles.tabSnapRoom} /> : null}
         </ScrollView>
         {leftHint ? (
           <View pointerEvents="none" style={[styles.tabEdgeHint, styles.tabEdgeHintLeft]}>

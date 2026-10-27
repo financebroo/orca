@@ -468,7 +468,9 @@ export async function buildMobileWebAppBundle({
   const html =
     '<!doctype html>\n<html lang="en" data-orca-scrollbars="sleek">\n<head>\n<meta charset="utf-8" />\n' +
     // Shell owns safe-area padding/insets; viewport-fit=cover would invite page-side double padding.
-    '<meta name="viewport" content="width=device-width, initial-scale=1" />\n' +
+    // iPhone Duo (2026-10-27): the WKWebView stayed zoomed in after a screenshot, hiding the header and
+    // right edge; terminal and chat pinch set text size in JS, so page zoom is locked.
+    '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />\n' +
     // Empty favicon prevents repeated unmanifested /favicon.ico requests/403s; WebView needs no tab icon asset.
     '<link rel="icon" href="data:," />\n' +
     `<title>Orca</title>\n${MOBILE_WEB_APP_ROOT_RESET}\n${MOBILE_WEB_APP_NATIVE_PARITY_STYLE}\n<style id="orca-scrollbars">${scrollbarStyle}</style>\n</head>\n<body>\n<div id="root"></div>\n` +

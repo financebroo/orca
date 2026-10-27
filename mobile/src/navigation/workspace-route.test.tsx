@@ -31,6 +31,7 @@ vi.mock('expo-router', () => ({
 }))
 vi.mock('react-native', () => ({
   AppState: { currentState: 'active' },
+  useWindowDimensions: () => ({ width: 390, height: 844 }),
   StyleSheet: { create: (styles: unknown) => styles },
   View: 'View',
   Text: 'Text',
