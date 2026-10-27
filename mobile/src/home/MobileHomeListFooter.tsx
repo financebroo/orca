@@ -23,6 +23,8 @@ export function MobileHomeListFooter(props: {
   onOpenResume: (card: HomeResumeCard) => void
   onOpenTasks: (hostId: string, provider?: TaskProvider) => void
   onPairDesktop: () => void
+  /** The unfolded landscape split shows account usage in its left column instead. */
+  hideAccountUsage?: boolean
 }) {
   const tasksHostPicker = useConnectedHostPicker(props.connectedHosts)
   const hostProviders = props.connectedHosts.map((host) => ({
@@ -61,7 +63,9 @@ export function MobileHomeListFooter(props: {
         onPairDesktop={props.onPairDesktop}
         onCreateWorkspace={props.onCreateWorkspace}
       />
-      <MobileHomeAccountUsageCards items={props.accountsHosts} onOpen={props.onOpenAccounts} />
+      {props.hideAccountUsage ? null : (
+        <MobileHomeAccountUsageCards items={props.accountsHosts} onOpen={props.onOpenAccounts} />
+      )}
     </View>
   )
 }

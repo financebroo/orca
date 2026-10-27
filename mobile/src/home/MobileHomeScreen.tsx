@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Alert, StyleSheet } from 'react-native'
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOpenMobileAccounts } from '../accounts/use-open-mobile-accounts'
 import { getProvenCachedWorktrees } from '../cache/worktree-cache'
@@ -11,7 +11,8 @@ import { useResponsiveLayout } from '../layout/responsive-layout'
 import { triggerMediumImpact } from '../platform/haptics'
 import { useOpenMobileSession } from '../session/use-open-mobile-session'
 import { useOpenMobileTasks } from '../tasks/use-open-mobile-tasks'
-import { colors } from '../theme/mobile-theme'
+import { StatsUsagePanel } from '../stats/StatsUsagePanel'
+import { colors, spacing } from '../theme/mobile-theme'
 import {
   useDisconnectHostClient,
   useForceReconnect,
@@ -25,6 +26,7 @@ import type { HostCatalogEntry, HostProfile } from '../transport/types'
 import { useOpenMobileHostEdit } from '../transport/use-open-mobile-host-edit'
 import type { HomeWorktreeSummary } from '../worktree/home-worktree-info'
 import { isResumeTargetConfirmedMissing, type HomeResumeCard } from '../worktree/home-resume-card'
+import { MobileHomeAccountUsageCards } from './MobileHomeAccountUsageCards'
 import { MobileHomeEmptyState } from './MobileHomeEmptyState'
 import { MobileHomeHostList } from './MobileHomeHostList'
 import { MobileHomeListFooter } from './MobileHomeListFooter'
@@ -36,6 +38,11 @@ export function MobileHomeScreen() {
   const data = useMobileHomeData()
   const insets = useSafeAreaInsets()
   const { isWideLayout, contentMaxWidth } = useResponsiveLayout()
+  // Wide screens (unfolded iPhone Duo, iPad): one column wastes the width, so stats get their own column.
+  const splitColumns = isWideLayout
+  const [refreshKey, setRefreshKey] = useState(0)
+  const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
+  const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
   const openMobileHostEdit = useOpenMobileHostEdit()
   const openMobileTasks = useOpenMobileTasks()
   const openMobileSession = useOpenMobileSession()
@@ -101,9 +108,62 @@ export function MobileHomeScreen() {
     }
   }
 
+  const statsClient =
+    data.allClients.find((entry) => entry.hostId === data.connectedHosts[0]?.id)?.client ?? null
+
+  const accountUsage =
+    data.accountsHosts.length > 0 ? (
+      <MobileHomeAccountUsageCards
+        items={data.accountsHosts}
+        onOpen={openMobileAccounts}
+        embedded
+      />
+    ) : null
+
+  const hostList = (
+    <MobileHomeHostList
+      autoConnectHostIds={data.autoConnectHostIds}
+      bottomInset={insets.bottom}
+      contentMaxWidth={contentMaxWidth}
+      footer={
+        <MobileHomeListFooter
+          accountsHosts={data.accountsHosts}
+          connectedHosts={data.connectedHosts}
+          resumeCard={data.resumeCard}
+          taskProvidersByHost={data.taskProvidersByHost}
+          onCreateWorkspace={() =>
+            data.router.push(newWorkspaceOverlayHref(data.connectedHosts.map((host) => host.id)))
+          }
+          onOpenAccounts={openMobileAccounts}
+          onOpenResume={openResume}
+          onOpenTasks={openMobileTasks}
+          onPairDesktop={() => data.router.push('/pair-scan')}
+          hideAccountUsage={splitColumns}
+        />
+      }
+      hostAttempts={data.hostAttempts}
+      hostLastConnected={data.hostLastConnected}
+      hostConnections={data.hostConnections}
+      hosts={data.sortedHostCatalog}
+      hostStates={data.hostStates}
+      isWideLayout={isWideLayout && !splitColumns}
+      stats={splitColumns ? null : data.stats}
+      worktreeInfo={data.worktreeInfo}
+      onOpen={openHost}
+      onLongPress={(host) => {
+        triggerMediumImpact()
+        openHostActions(host)
+      }}
+      onOpenActions={openHostActions}
+    />
+  )
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <MobileHomeTopBar onOpenSettings={() => data.router.push('/settings')} />
+      <MobileHomeTopBar
+        onOpenSettings={openSettings}
+        onRefresh={splitColumns ? refreshUsage : undefined}
+      />
       {data.hostCatalog.length === 0 ? (
         <MobileHomeEmptyState
           bottomInset={insets.bottom}
@@ -111,43 +171,29 @@ export function MobileHomeScreen() {
           isWideLayout={isWideLayout}
           onPairDesktop={() => data.router.push('/pair-scan')}
         />
-      ) : (
-        <MobileHomeHostList
-          autoConnectHostIds={data.autoConnectHostIds}
-          bottomInset={insets.bottom}
-          contentMaxWidth={contentMaxWidth}
-          footer={
-            <MobileHomeListFooter
-              accountsHosts={data.accountsHosts}
-              connectedHosts={data.connectedHosts}
-              resumeCard={data.resumeCard}
-              taskProvidersByHost={data.taskProvidersByHost}
-              onCreateWorkspace={() =>
-                data.router.push(
-                  newWorkspaceOverlayHref(data.connectedHosts.map((host) => host.id))
-                )
-              }
-              onOpenAccounts={openMobileAccounts}
-              onOpenResume={openResume}
-              onOpenTasks={openMobileTasks}
-              onPairDesktop={() => data.router.push('/pair-scan')}
+      ) : splitColumns ? (
+        <View style={styles.columns}>
+          <ScrollView
+            style={styles.column}
+            contentContainerStyle={[
+              styles.statsColumn,
+              { paddingBottom: spacing.xl + insets.bottom }
+            ]}
+          >
+            <Text style={styles.columnTitle}>Stats & Usage</Text>
+            {/* The panel's first section (Activity) lines up with the right column's DESKTOPS card. */}
+            <StatsUsagePanel
+              client={statsClient}
+              counters={data.stats}
+              activityExtra={accountUsage}
+              // The top bar owns refresh in the split.
+              refreshKey={refreshKey}
             />
-          }
-          hostAttempts={data.hostAttempts}
-          hostLastConnected={data.hostLastConnected}
-          hostConnections={data.hostConnections}
-          hosts={data.sortedHostCatalog}
-          hostStates={data.hostStates}
-          isWideLayout={isWideLayout}
-          stats={data.stats}
-          worktreeInfo={data.worktreeInfo}
-          onOpen={openHost}
-          onLongPress={(host) => {
-            triggerMediumImpact()
-            openHostActions(host)
-          }}
-          onOpenActions={openHostActions}
-        />
+          </ScrollView>
+          <View style={styles.column}>{hostList}</View>
+        </View>
+      ) : (
+        hostList
       )}
       <ActionSheetModal
         visible={actionTarget != null}
@@ -189,5 +235,16 @@ export function MobileHomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.bgBase }
+  container: { flex: 1, backgroundColor: colors.bgBase },
+  columns: { flex: 1, flexDirection: 'row' },
+  column: { flex: 1 },
+  statsColumn: { paddingHorizontal: spacing.lg },
+  columnTitle: {
+    color: colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    paddingTop: spacing.xs,
+    paddingBottom: spacing.md
+  }
 })
