@@ -3,6 +3,7 @@ import { applyFitScale } from './fit-scale'
 import { notify } from './host-notify'
 import { emitKeyboardAvoidanceMetrics } from './keyboard-avoidance-metrics'
 import { emitModesIfChanged } from './mode-mirroring'
+import { predictLocalEcho, resetLocalEcho } from './local-echo'
 import { reflow } from './reflow'
 import { resumeTerminalDataReplyAuthority } from './query-reply'
 import { repositionOverlay } from './selection-overlay'
@@ -53,6 +54,7 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
     notify(scope, { type: 'pong', pingId: msg.id })
   } else if (msg.type === 'init') {
     holdHostFrame(scope, msg)
+    resetLocalEcho(scope)
     init(
       scope,
       msg.cols!,
@@ -77,14 +79,20 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
     }
   } else if (msg.type === 'resize') {
     holdHostFrame(scope, msg)
+    resetLocalEcho(scope)
     resize(scope, msg.cols!, msg.rows!)
   } else if (msg.type === 'reflow') {
     holdHostFrame(scope, msg)
+    resetLocalEcho(scope)
     reflow(scope, msg.cols!, msg.rows!)
   } else if (msg.type === 'write') {
     write(scope, msg.data!)
+  } else if (msg.type === 'predict') {
+    predictLocalEcho(scope, msg.data!)
   } else if (msg.type === 'clear') {
     scope.terminalGeneration++
+    scope.localEchoTrustedRow = null
+    resetLocalEcho(scope)
     resetWriteQueue(scope)
     resumeTerminalDataReplyAuthority(scope)
     scope.statusDotPendingSelector = false

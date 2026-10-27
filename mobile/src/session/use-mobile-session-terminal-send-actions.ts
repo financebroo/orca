@@ -51,7 +51,8 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
     handleLiveInputSubmit,
     canSend,
     scheduleDelayedAction,
-    showToast
+    showToast,
+    terminalRefs
   } = scope
   const TERMINAL_KEYBOARD_DISMISS_ACTION_SHEET_FALLBACK_MS = 450
 
@@ -170,7 +171,11 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
   }
 
   const sendLiveTerminalInput = useCallback(
-    async (handle: string, bytes: string): Promise<boolean> => {
+    async (
+      handle: string,
+      bytes: string,
+      options?: { readonly predicted?: boolean }
+    ): Promise<boolean> => {
       const text = normalizeTerminalTextInput(bytes)
       if (text.length === 0) {
         return false
@@ -189,6 +194,9 @@ export function useMobileSessionTerminalSendActions(scope: MobileSessionTerminal
         activeSessionTabTypeRef.current !== 'terminal'
       ) {
         return false
+      }
+      if (!options?.predicted) {
+        terminalRefs?.current.get(handle)?.predictInput?.(text)
       }
       // Discard live-mirror deltas behind a dying send so reconnect cannot replay stale bytes.
       return terminalInputSend

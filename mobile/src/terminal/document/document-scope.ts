@@ -95,6 +95,11 @@ export type TerminalDocumentState = {
   longPressOrigin: TerminalDocumentTouchOrigin | null
   tapCandidate: TerminalDocumentTapCandidate | null
   bottomRowBackdrop: string
+  // Typed chars drawn ahead of the host echo, anchored at the cursor cell when the first was typed.
+  localEchoPending: string[]
+  localEchoAnchor: { col: number; row: number } | null
+  localEchoTimer: ReturnType<typeof setTimeout> | null
+  localEchoTrustedRow: number | null
   surface: HTMLElement | null
   pendingTerm: TerminalDocumentTerminal | null
   committedTerm: TerminalDocumentTerminal | null
@@ -211,6 +216,10 @@ function createTerminalDocumentState(): TerminalDocumentState {
     tapCandidate: null,
     wheelAccumDeltaY: 0,
     bottomRowBackdrop: '',
+    localEchoPending: [],
+    localEchoAnchor: null,
+    localEchoTimer: null,
+    localEchoTrustedRow: null,
     surface: null,
     pendingTerm: null,
     committedTerm: null,

@@ -234,6 +234,11 @@ export function useTerminalWebViewController(
       write(data: string) {
         writeCoalescer.write(data)
       },
+      predictInput(data: string) {
+        // The echo of a keystroke should not sit in the 48 ms idle flush window.
+        writeCoalescer.markInteractive()
+        postMessage({ type: 'predict', data })
+      },
       init({ cols, rows, initialData, preserveScroll, oscLinks, frame }: TerminalInit) {
         // Arm ready before posting init so a synchronous reply cannot be lost.
         promises.armReady()
