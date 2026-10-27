@@ -5,7 +5,9 @@ import type { VoiceSettingsOperations } from './voice-settings-operations'
 import { voiceSettingsStyles as styles } from './voice-settings-styles'
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
-import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverStatusColumnPadding, useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
+import { SIDE_RAIL_DRAWN_BY_SCREEN, useSideRailContent } from '../layout/side-rail'
 import { BottomDrawer } from '../components/BottomDrawer'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
 import { VoiceModelList } from '../components/VoiceModelList'
@@ -36,6 +38,14 @@ export default function VoiceSettingsScreen({
 }): React.JSX.Element {
   const insets = useSafeAreaInsets()
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side: full width under the strip, the title row beside the block on the camera's line.
+  const { topCorner: coverTopCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle(spacing.lg)
+  // Unfolded, the dictation section already sits below the corner block, so only the cover screen pads it.
+  const coverColumnPadding = useCoverStatusColumnPadding()
+  // iPhone Duo (2026-10-27): unfolded landscape reserves an empty full-height rail on the right; Voice
+  // has nothing to put there, so it takes the column and runs full width under the status items.
+  useSideRailContent(SIDE_RAIL_DRAWN_BY_SCREEN)
   const [setup, setSetup] = useState<MobileSpeechSetup | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -168,9 +178,13 @@ export default function VoiceSettingsScreen({
   const selectedModelLabel = selectedModel?.label ?? 'None selected'
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.container, { paddingTop: coverTopCorner ? 0 : insets.top + spacing.sm }]}>
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           accessibilityRole="button"
@@ -207,7 +221,7 @@ export default function VoiceSettingsScreen({
             style={[
               styles.section,
               styles.sectionTopGap,
-              statusColumnPadding > 0 && { marginRight: statusColumnPadding - spacing.lg }
+              coverColumnPadding > 0 && { marginRight: coverColumnPadding - spacing.lg }
             ]}
           >
             <View style={styles.row}>

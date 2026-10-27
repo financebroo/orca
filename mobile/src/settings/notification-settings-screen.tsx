@@ -6,6 +6,7 @@ import type { NotificationSettingsOperations } from './notification-settings-ope
 import { ChevronLeft } from 'lucide-react-native'
 import { colors, spacing, typography } from '../theme/mobile-theme'
 import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
 import type { NotificationPermissionState } from '../notifications/notification-permissions'
 
 const DEFAULT_PERMISSION_STATE: NotificationPermissionState = {
@@ -28,6 +29,9 @@ export default function NotificationsScreen({
 }) {
   const insets = useSafeAreaInsets()
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side: full width under the strip, the title row beside the block on the camera's line.
+  const { topCorner: coverTopCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle(spacing.lg)
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
   const requestRevision = useRef(0)
@@ -107,12 +111,16 @@ export default function NotificationsScreen({
     <ScrollView
       style={styles.container}
       contentContainerStyle={{
-        paddingTop: insets.top + spacing.sm,
+        paddingTop: coverTopCorner ? 0 : insets.top + spacing.sm,
         paddingBottom: insets.bottom + spacing.xl
       }}
     >
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           accessibilityRole="button"

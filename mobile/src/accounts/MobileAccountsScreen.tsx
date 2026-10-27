@@ -8,6 +8,7 @@ import { useHostClient } from '../transport/host-client-hooks'
 import { colors, spacing } from '../theme/mobile-theme'
 import { styles } from './mobile-accounts-screen-styles'
 import { useStatusColumn } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
 import { useNow } from '../hooks/use-now'
 import { ClaudeIcon, OpenAIIcon } from '../components/AgentIcons'
 import {
@@ -38,6 +39,7 @@ export function MobileAccountsScreen() {
   const insets = useSafeAreaInsets()
   // Folded Duo: full-width content; the header row (title + refresh) stays left of the status column.
   const statusColumn = useStatusColumn()
+  const { safeEdges } = useCoverStripScreen()
   const { hostId } = useLocalSearchParams<{ hostId: string }>()
 
   // Why: shared client per host. See docs/mobile-shared-client-per-host.md.
@@ -342,8 +344,14 @@ export function MobileAccountsScreen() {
   )
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={[styles.topRow, statusColumn !== null && { paddingRight: statusColumn.width }]}>
+    <SafeAreaView style={styles.container} edges={safeEdges}>
+      <View
+        style={[
+          styles.topRow,
+          statusColumn !== null && { paddingRight: statusColumn.width },
+          useCoverHeaderRowStyle()
+        ]}
+      >
         <Pressable
           style={styles.backButton}
           onPress={() => router.back()}

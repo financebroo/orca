@@ -2,7 +2,7 @@ import { RefreshCw, Settings } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { OrcaLogo } from '../components/OrcaLogo'
 import { colors, spacing } from '../theme/mobile-theme'
-import { useStatusColumn, useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverCorner, useStatusColumn, useStatusColumnPadding } from '../layout/side-safe-area'
 import { PORTRAIT_CLOCK_CENTER_Y } from '../layout/portrait-header-line'
 
 const ICON_BUTTON_SIZE = 36
@@ -22,12 +22,17 @@ export function MobileHomeTopBar({
   const statusColumnPadding = useStatusColumnPadding()
   // Unfolded portrait (the corner status block): the row sits on the clock's line, like the host header.
   const onClockLine = statusColumn !== null && !statusColumn.cover
+  // Folded on its side with the block in a top corner, the row steps around it.
+  const coverCorner = useCoverCorner()
+  const topCorner = coverCorner?.top ? coverCorner : null
   return (
     <View
       style={[
         styles.topBar,
         statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
-        onClockLine && { paddingTop: PORTRAIT_CLOCK_CENTER_Y - ICON_BUTTON_SIZE / 2 }
+        onClockLine && { paddingTop: PORTRAIT_CLOCK_CENTER_Y - ICON_BUTTON_SIZE / 2 },
+        topCorner?.side === 'left' && { paddingLeft: topCorner.width },
+        topCorner?.side === 'right' && { paddingRight: topCorner.width }
       ]}
     >
       <View style={styles.brandLockup}>

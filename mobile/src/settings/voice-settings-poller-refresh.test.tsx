@@ -6,6 +6,10 @@ import type { VoiceSettingsOperations } from './voice-settings-operations'
 import { findAllByHostType } from '../test-support/react-test-renderer-host-nodes'
 
 // Use the real focus-gated poller to verify rejected saves trigger a load; the sibling state test stubs it.
+vi.mock('../layout/cover-strip-screen', () => ({
+  useCoverStripScreen: () => ({ topCorner: null, safeEdges: ['top'] }),
+  useCoverHeaderRowStyle: () => null
+}))
 vi.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',

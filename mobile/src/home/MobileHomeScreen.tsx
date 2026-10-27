@@ -10,8 +10,12 @@ import { getHostListActionSheetActions } from '../host-list-action-sheet-actions
 import { hostRouteWithNotice } from '../host-route-notice'
 import { foldPosture, type FoldPosture } from '../layout/fold-division'
 import { useResponsiveLayout } from '../layout/responsive-layout'
-import { useWindowSafeAreaInsets } from '../layout/side-safe-area'
-import { useSideRailAvailable, useSideRailContent } from '../layout/side-rail'
+import { useCoverCorner, useWindowSafeAreaInsets } from '../layout/side-safe-area'
+import {
+  SIDE_RAIL_DRAWN_BY_SCREEN,
+  useSideRailAvailable,
+  useSideRailContent
+} from '../layout/side-rail'
 import { useFoldDivision } from '../layout/use-window-regions'
 import { triggerMediumImpact } from '../platform/haptics'
 import { useOpenMobileSession } from '../session/use-open-mobile-session'
@@ -84,9 +88,13 @@ export function MobileHomeScreen() {
   const actionsInRail = useSideRailAvailable() && splitColumns && focused
   const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
   const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
+  // Folded on its side, Home runs under the status strip; only the corner block stays clear.
+  const claimsCoverStrip = useCoverCorner() !== null && focused
   useSideRailContent(
     actionsInRail ? (
       <MobileHomeSideRail onOpenSettings={openSettings} onRefresh={refreshUsage} />
+    ) : claimsCoverStrip ? (
+      SIDE_RAIL_DRAWN_BY_SCREEN
     ) : null
   )
   const openMobileHostEdit = useOpenMobileHostEdit()

@@ -4,20 +4,28 @@ import { useRouter } from 'expo-router'
 import { ChevronLeft } from 'lucide-react-native'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
 import { useMobileDefaultSessionViewPreference } from '../session/use-mobile-default-session-view-preference'
 
 export default function NativeChatSettingsScreen({ onBack }: { onBack?: () => void }) {
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side: full width under the strip, the title row beside the block on the camera's line.
+  const { topCorner: coverTopCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle(spacing.lg)
 
   const { defaultView, setDefaultView } = useMobileDefaultSessionViewPreference()
   const chatDefault = defaultView === 'chat'
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.container, { paddingTop: coverTopCorner ? 0 : insets.top + spacing.sm }]}>
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           accessibilityRole="button"

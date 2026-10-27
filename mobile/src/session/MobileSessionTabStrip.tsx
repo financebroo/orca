@@ -29,10 +29,13 @@ const DOUBLE_TAP_RENAME_MS = 300
 
 export function MobileSessionTabStrip({
   controller,
-  inTopBar
+  inTopBar,
+  centered = false
 }: {
   controller: MobileSessionController
   inTopBar: boolean
+  // Folded on its side, the top bar is as tall as the camera block; the tabs sit on its middle line.
+  centered?: boolean
 }) {
   const { isWideLayout } = useResponsiveLayout()
   const {
@@ -172,7 +175,11 @@ export function MobileSessionTabStrip({
           ref={attachTabStrip}
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={[styles.tabScroll, inTopBar && styles.tabScrollInTopBar]}
+          style={[
+            styles.tabScroll,
+            inTopBar && styles.tabScrollInTopBar,
+            centered && { alignSelf: 'center' }
+          ]}
           contentContainerStyle={[styles.tabContent, inTopBar && styles.tabContentInTopBar]}
           keyboardShouldPersistTaps="handled"
           scrollEventThrottle={16}

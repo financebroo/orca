@@ -15,7 +15,12 @@ import {
   useSideRailDrawnByScreen
 } from './side-rail'
 import { hostOs } from '../platform/host-os'
-import { useSideRailTop } from './use-window-regions'
+import { useOcclusions, useReportedCoverCorner, useSideRailTop } from './use-window-regions'
+import {
+  COVER_COLUMN_MIN_INSET,
+  coverCornerFromOcclusions,
+  type CoverCorner
+} from './window-regions'
 
 const WindowSafeAreaInsetsContext = createContext<EdgeInsets | null>(null)
 
@@ -34,6 +39,7 @@ export type StatusColumn = {
 const STATUS_ITEMS_CENTER_OFFSET = 6
 
 const StatusColumnContext = createContext<StatusColumn | null>(null)
+const CoverCornerContext = createContext<CoverCorner | null>(null)
 
 // Below this window width the Duo is folded: the PR's 600pt split cutoff, under the 669pt inner screen.
 const COVER_SCREEN_MAX_WIDTH = 600
@@ -57,6 +63,22 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
   // full-height right inset, so every screen lost ~84pt of a 466pt width. Content now runs full width and
   // only the rows beside the column (headers) clear it via useStatusColumn().
   const sideRailTop = useSideRailTop()
+  const occlusions = useOcclusions()
+  // The page cannot see occlusions; it uses the corner the shell measured while it is given that side.
+  const reportedCoverCorner = useReportedCoverCorner()
+  // Folded on its side: a screen that claims the strip (SIDE_RAIL_DRAWN_BY_SCREEN) runs under it and
+  // keeps only the corner block clear; the rest keep the inset as before.
+  // A nested area (the host stack) sees no side inset; it keeps the corner the outer area found.
+  const inheritedCoverCorner = useContext(CoverCornerContext)
+  const measuredCoverCorner = useMemo(() => {
+    if (reportedCoverCorner !== null) {
+      return insets[reportedCoverCorner.side] >= COVER_COLUMN_MIN_INSET ? reportedCoverCorner : null
+    }
+    return hostOs() === 'ios' && frame.width > frame.height && frame.height < COVER_SCREEN_MAX_WIDTH
+      ? coverCornerFromOcclusions(insets, frame.width, occlusions)
+      : null
+  }, [reportedCoverCorner, frame.width, frame.height, insets, occlusions])
+  const coverCorner = measuredCoverCorner ?? inheritedCoverCorner
   const portraitStatusBlock =
     hostOs() === 'ios' &&
     railWidth === 0 &&
@@ -86,7 +108,11 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
     [railWidth, frame.width, insets.top, sideRailTop, portraitStatusBlock]
   )
   const statusColumn = measuredStatusColumn ?? inheritedStatusColumn
-  const padRight = statusColumn !== null ? 0 : insets.right
+  // Subscribed for the boolean alone, so a screen republishing its rail does not re-render the app.
+  const railDrawnByScreen = useSideRailDrawnByScreen()
+  const coverStripClaimed = coverCorner !== null && railDrawnByScreen
+  const padLeft = coverStripClaimed ? 0 : insets.left
+  const padRight = statusColumn !== null || coverStripClaimed ? 0 : insets.right
   const areaInsets = useMemo(
     () => ({ ...insets, left: 0, right: 0, ...(portraitStatusBlock ? { top: 0 } : null) }),
     [insets, portraitStatusBlock]
@@ -94,13 +120,11 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
   const areaFrame = useMemo(
     () => ({
       ...frame,
-      x: frame.x + insets.left,
-      width: Math.max(0, frame.width - insets.left - padRight)
+      x: frame.x + padLeft,
+      width: Math.max(0, frame.width - padLeft - padRight)
     }),
-    [frame, insets.left, padRight]
+    [frame, padLeft, padRight]
   )
-  // Subscribed for the boolean alone, so a screen republishing its rail does not re-render the app.
-  const railDrawnByScreen = useSideRailDrawnByScreen()
   const showRailColumn = railWidth > 0 && statusColumn === null && !railDrawnByScreen
   // Below the status column when the platform measured it; otherwise from the top inset.
   const railTop = Math.max(insets.top, sideRailTop ?? 0)
@@ -110,7 +134,9 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
         <SafeAreaInsetsContext.Provider value={areaInsets}>
           <SideRailAvailableContext.Provider value={railWidth > 0}>
             <StatusColumnContext.Provider value={statusColumn}>
-              {children}
+              <CoverCornerContext.Provider value={coverCorner}>
+                {children}
+              </CoverCornerContext.Provider>
             </StatusColumnContext.Provider>
           </SideRailAvailableContext.Provider>
         </SafeAreaInsetsContext.Provider>
@@ -125,7 +151,7 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
         style={[
           styles.area,
           {
-            paddingLeft: insets.left,
+            paddingLeft: padLeft,
             paddingRight: railWidth > 0 ? 0 : padRight
           }
         ]}
@@ -150,6 +176,11 @@ export function SideSafeArea({ children }: { children: ReactNode }) {
   )
 }
 
+/** Folded on its side: the corner block a screen that claims the side strip must keep clear. */
+export function useCoverCorner(): CoverCorner | null {
+  return useContext(CoverCornerContext)
+}
+
 /** A subtree that never sits beside the status column (the unfolded portrait sidebar, on the left). */
 export function ClearStatusColumn({ children }: { children: ReactNode }) {
   return <StatusColumnContext.Provider value={null}>{children}</StatusColumnContext.Provider>
@@ -163,6 +194,12 @@ export function useStatusColumn(): StatusColumn | null {
 /** Right padding for a row that sits beside the status column (screen headers). */
 export function useStatusColumnPadding(): number {
   return useContext(StatusColumnContext)?.width ?? 0
+}
+
+/** Right padding for a content block that sits beside the column only on the folded cover screen. */
+export function useCoverStatusColumnPadding(): number {
+  const column = useContext(StatusColumnContext)
+  return column?.cover ? column.width : 0
 }
 
 // Modals own a separate window outside SideSafeArea and need the original window insets.

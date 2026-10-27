@@ -10,6 +10,8 @@ import {
   Plus
 } from './mobile-tasks-dependencies'
 import { useStatusColumnPadding } from '../layout/side-safe-area'
+import type { ViewStyle } from 'react-native'
+import { useCoverHeaderRowStyle } from '../layout/cover-strip-screen'
 import { MobileTasksHostSubtitle } from './mobile-tasks-host-subtitle'
 import { styles } from './mobile-tasks-legacy-styles'
 import { renderMobileTasksProviderControls } from './mobile-tasks-provider-controls'
@@ -30,12 +32,13 @@ export function renderMobileTasksChrome(model: ConnectionPresentationModel) {
 function MobileTasksTopChrome({ model }: { model: ConnectionPresentationModel }) {
   const { setTaskCopyFeedbackRootRef } = model
   const statusColumnPadding = useStatusColumnPadding()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle()
   return (
     <View
       ref={setTaskCopyFeedbackRootRef}
       style={[styles.topChrome, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
     >
-      {renderMobileTasksStatusBar(model)}
+      {renderMobileTasksStatusBar(model, coverHeaderRowStyle)}
 
       {renderMobileTasksProviderControls(model)}
 
@@ -44,7 +47,10 @@ function MobileTasksTopChrome({ model }: { model: ConnectionPresentationModel })
   )
 }
 
-export function renderMobileTasksStatusBar(model: ConnectionPresentationModel) {
+export function renderMobileTasksStatusBar(
+  model: ConnectionPresentationModel,
+  rowStyle: ViewStyle | null = null
+) {
   const {
     connState,
     githubMode,
@@ -69,7 +75,7 @@ export function renderMobileTasksStatusBar(model: ConnectionPresentationModel) {
     taskUiReady
   } = model
   return (
-    <View style={styles.statusBar}>
+    <View style={[styles.statusBar, rowStyle]}>
       <Pressable
         style={styles.backButton}
         onPress={() => router.back()}

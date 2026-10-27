@@ -24,7 +24,7 @@ import {
   useBottomDrawerModalHostBackClaim
 } from './bottom-drawer-modal-host-scope'
 import { useResponsiveLayout } from '../layout/responsive-layout'
-import { useStatusColumn, useWindowSafeAreaInsets } from '../layout/side-safe-area'
+import { useCoverCorner, useStatusColumn, useWindowSafeAreaInsets } from '../layout/side-safe-area'
 import { useBackClaim } from '../navigation/use-back-claim'
 import { currentSoftKeyboardHeight, subscribeSoftKeyboard } from '../platform/keyboard-occlusion'
 import { hostOs } from '../platform/host-os'
@@ -33,6 +33,8 @@ const DISMISS_THRESHOLD = 80
 const SPRING_CONFIG = { damping: 28, stiffness: 400 }
 // Damp upward pull with rubber-band factor to signal drawer cannot expand further.
 const RUBBER_BAND_FACTOR = 0.25
+// The workspace list's one-row header with no block beside it (measured 2026-10-27, folded on its side).
+const COVER_PLAIN_HEADER_HEIGHT = 44
 const TOP_SCROLL_EPSILON = 1
 
 export type MountedBottomDrawerProps = {
@@ -88,9 +90,25 @@ export function MountedBottomDrawer({
   // iPhone Duo (2026-10-27): folded, the top inset is ~0 but the status column runs down the top right,
   // so a tall sheet (Voice > Speech Model) put its Download buttons under the clock. Cap the sheet below it.
   const sheetTopInset = Math.max(insets.top, statusColumn?.bottom ?? 0)
+  // iPhone Duo (2026-10-27): folded on its side, the sheet runs full width under the strip and
+  // stops just below the header ribbon: 82pt beside a top-corner block, one plain row otherwise. With
+  // the block in the bottom corner, the rows get the block's height of bottom padding so the last
+  // one scrolls clear of the camera.
+  const coverCorner = useCoverCorner()
+  const sheetMaxHeight =
+    coverCorner === null
+      ? screenHeight - sheetTopInset - spacing.lg
+      : screenHeight -
+        (coverCorner.top ? coverCorner.height : COVER_PLAIN_HEADER_HEIGHT) -
+        spacing.sm
   // iPhone Duo (2026-10-26): a scrolling sheet scrolls its rows down to the screen edge; padding the
   // sheet itself left an opaque home-indicator band that cut rows off above the bottom.
-  const scrollBottomPadding = { paddingBottom: insets.bottom + spacing.lg }
+  const scrollBottomPadding = {
+    paddingBottom:
+      (coverCorner !== null && !coverCorner.top
+        ? Math.max(insets.bottom, coverCorner.height)
+        : insets.bottom) + spacing.lg
+  }
   // Cap/center tablet width while retaining phone’s bottom anchor and drag/keyboard transforms.
   const { isWideLayout, modalMaxWidth } = useResponsiveLayout()
   const insideModalHost = useBottomDrawerModalHost() !== null
@@ -381,7 +399,10 @@ export function MountedBottomDrawer({
           style={[
             styles.anchor,
             isWideLayout && styles.anchorWide,
-            { paddingLeft: insets.left, paddingRight: sideInsetRight }
+            {
+              paddingLeft: coverCorner ? 0 : insets.left,
+              paddingRight: coverCorner ? 0 : sideInsetRight
+            }
           ]}
           pointerEvents="box-none"
         >
@@ -396,7 +417,7 @@ export function MountedBottomDrawer({
               {
                 width: '100%',
                 maxWidth: isWideLayout ? modalMaxWidth : undefined,
-                maxHeight: screenHeight - sheetTopInset - spacing.lg,
+                maxHeight: sheetMaxHeight,
                 // Fill shrinks height and adds marginBottom to align bottom above keys; content-sized mode retains translateY shift.
                 height: fillHeight,
                 marginBottom: fillAvailable ? keyboardInset : 0,

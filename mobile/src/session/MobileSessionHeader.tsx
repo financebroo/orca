@@ -7,6 +7,7 @@ import { MobileSessionTabStrip } from './MobileSessionTabStrip'
 import { MobileSessionViewControls } from './MobileSessionViewControls'
 import { StatusDot } from '../components/StatusDot'
 import { styles } from './mobile-session-styles'
+import { spacing } from '../theme/mobile-theme'
 import { useHostSidebarReveal } from '../layout/host-sidebar-reveal'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 import {
@@ -14,7 +15,12 @@ import {
   PORTRAIT_NAME_CENTER_Y,
   PORTRAIT_SESSION_BAR_HEIGHT
 } from '../layout/portrait-header-line'
-import { useStatusColumn } from '../layout/side-safe-area'
+import { useCoverCorner, useStatusColumn } from '../layout/side-safe-area'
+import {
+  COVER_CAMERA_CENTER_FROM_EDGE,
+  COVER_CAMERA_RADIUS,
+  coverHeaderRowPaddingTop
+} from '../layout/window-regions'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 export function MobileSessionHeader({ controller }: { controller: MobileSessionController }) {
@@ -45,21 +51,42 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
   // so its six icons stack in two rows of three (view controls over panel actions) left of it.
   const statusBlock = useStatusColumn()
   const iconsStacked = isWideLayout && statusBlock !== null && sessionSideRail !== 'fullWidth'
+  // Folded on its side only a top-corner block needs room: the row steps around it, as tall as the
+  // block and centered on the camera; a bottom-corner block leaves the row the full width.
+  const coverCorner = useCoverCorner()
+  const topCorner = coverCorner?.top ? coverCorner : null
   const tabStrip = hasTabs ? (
-    <MobileSessionTabStrip controller={controller} inTopBar={tabsInTopBar} />
+    <MobileSessionTabStrip
+      controller={controller}
+      inTopBar={tabsInTopBar}
+      centered={tabsInTopBar && topCorner !== null}
+    />
   ) : null
   return (
     <SafeAreaView
       style={[
         styles.sessionChrome,
-        sessionSideRail === 'fullWidth' && { paddingRight: statusColumnWidth }
+        sessionSideRail === 'fullWidth' &&
+          coverCorner === null && { paddingRight: statusColumnWidth },
+        // 2026-10-27 on device: the full 84pt block left the back button too far from the camera. The
+        // button's 36pt visual now starts at the camera's edge, past the bar's 8pt padding and its 4pt
+        // touch margin, so the chevron sits 8pt from the camera.
+        topCorner?.side === 'left' && {
+          paddingLeft: COVER_CAMERA_CENTER_FROM_EDGE + COVER_CAMERA_RADIUS - spacing.sm - spacing.xs
+        },
+        topCorner?.side === 'right' && { paddingRight: topCorner.width }
       ]}
-      edges={['top']}
+      edges={topCorner ? [] : ['top']}
     >
       <View
         style={[
           styles.sessionTopBar,
           isWideLayout && styles.sessionTopBarWide,
+          topCorner && {
+            minHeight: topCorner.height,
+            paddingTop: coverHeaderRowPaddingTop(topCorner),
+            paddingBottom: 0
+          },
           // iPhone Duo (2026-10-27), by preference: the tab row rises under the icon rows and runs to
           // the right edge, under the status icons.
           iconsStacked && {

@@ -78,6 +78,7 @@ import {
   renderMobileTasksProjectDetailDrawer
 } from './mobile-tasks-project-detail-drawer'
 import { renderMobileTasksItemDetailDrawer } from './mobile-tasks-item-detail-drawer'
+import { useCoverStripScreen } from '../layout/cover-strip-screen'
 
 export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentationModel }) {
   const {
@@ -107,8 +108,9 @@ export function MobileTasksLegacySurface({ model }: { model: ConnectionPresentat
     toggleGitHubStatus,
     toggleGitLabStatus
   } = model
+  const { safeEdges } = useCoverStripScreen()
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container} edges={safeEdges}>
       {renderMobileTasksChrome(model)}
 
       {error ? (

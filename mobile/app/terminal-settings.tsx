@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router'
 import { ChevronLeft, ChevronRight, Smartphone, Type } from 'lucide-react-native'
 import { colors, spacing } from '../src/theme/mobile-theme'
 import { useStatusColumnPadding } from '../src/layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../src/layout/cover-strip-screen'
 import { loadHosts } from '../src/transport/host-store'
 import type { HostProfile } from '../src/transport/types'
 import { useFocusedSettingsHostClients } from '../src/transport/settings-host-client-connections'
@@ -113,6 +114,9 @@ function HostFitRow({
 
 export default function TerminalSettingsScreen() {
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side: full width under the strip, the title row beside the block on the camera's line.
+  const { topCorner: coverTopCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle(spacing.lg)
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [hosts, setHosts] = useState<HostProfile[]>([])
@@ -229,9 +233,15 @@ export default function TerminalSettingsScreen() {
   )
 
   return (
-    <GestureHandlerRootView style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <GestureHandlerRootView
+      style={[styles.container, { paddingTop: coverTopCorner ? 0 : insets.top + spacing.sm }]}
+    >
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           style={styles.backButton}

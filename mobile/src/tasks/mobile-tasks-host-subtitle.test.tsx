@@ -27,6 +27,8 @@ vi.mock('./mobile-tasks-legacy-styles', async () => ({
 vi.mock('./mobile-tasks-provider-controls', () => ({
   renderMobileTasksProviderControls: () => null
 }))
+vi.mock('../layout/side-safe-area', () => ({ useStatusColumnPadding: () => 0 }))
+vi.mock('../layout/cover-strip-screen', () => ({ useCoverHeaderRowStyle: () => null }))
 vi.mock('./mobile-tasks-search-control', () => ({ renderMobileTasksSearchControl: () => null }))
 const hostStore = vi.hoisted(() => {
   const hosts = [

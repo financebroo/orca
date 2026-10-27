@@ -1,4 +1,5 @@
 import { BridgeInitRouteSchema, type BridgeInitRoute } from './bridge/bridge-envelope'
+import { sameCoverCorner, type BridgeCoverCorner } from './bridge/bridge-cover-corner'
 import { sameFoldDivision, type BridgeFoldDivision } from './bridge/bridge-fold-division'
 import { readBridgeRouteUpdate } from './bridge/bridge-route-update'
 import {
@@ -25,6 +26,10 @@ export type BridgeHostRoute = {
   readonly sideRailTop: () => number | null
   /** Moves the held side rail top on the same lane as the insets. */
   readonly publishSideRailTop: (next: number | null, deliverable: boolean) => void
+  /** The corner block the next `init` carries. */
+  readonly coverCorner: () => BridgeCoverCorner | null
+  /** Moves the held corner block on the same lane as the insets. */
+  readonly publishCoverCorner: (next: BridgeCoverCorner | null, deliverable: boolean) => void
 }
 
 // Parse against the page’s route schema before init; interpolated host ids with query/hash/whitespace/dot segments could otherwise leave a blank page asking forever.
@@ -38,6 +43,7 @@ export function createBridgeHostRoute(args: {
   keyboardInset?: number
   foldDivision?: BridgeFoldDivision | null
   sideRailTop?: number | null
+  coverCorner?: BridgeCoverCorner | null
 }): BridgeHostRoute {
   const parsed = BridgeInitRouteSchema.safeParse(args.opened)
   let route = parsed.success && !args.refused ? parsed.data : null
@@ -45,6 +51,7 @@ export function createBridgeHostRoute(args: {
   let keyboard = args.keyboardInset ?? 0
   let fold = args.foldDivision ?? null
   let railTop = args.sideRailTop ?? null
+  let corner = args.coverCorner ?? null
   return {
     current: () => route,
     openIssue: () => (parsed.success ? 'unknown' : (parsed.error.issues[0]?.message ?? 'unknown')),
@@ -85,6 +92,16 @@ export function createBridgeHostRoute(args: {
         return
       }
       railTop = next
+      if (deliverable) {
+        args.sendInit()
+      }
+    },
+    coverCorner: () => corner,
+    publishCoverCorner: (next, deliverable) => {
+      if (sameCoverCorner(corner, next)) {
+        return
+      }
+      corner = next
       if (deliverable) {
         args.sendInit()
       }

@@ -14,7 +14,7 @@ import { useSideRailTop } from '../layout/use-window-regions'
 import { hostOs } from '../platform/host-os'
 import { resolveSessionSafeAreaInsets } from './session-safe-area-insets'
 import { useSideRailAvailable } from '../layout/side-rail'
-import { useWindowSafeAreaInsets } from '../layout/side-safe-area'
+import { useCoverCorner, useWindowSafeAreaInsets } from '../layout/side-safe-area'
 import { type ActivePanel, canDockSessionPanel } from './session-panel-host'
 import { useMobilePrBranchContext } from './use-mobile-pr-branch-context'
 import { isFloatingWorkspaceWorktreeId } from './floating-workspace'
@@ -101,8 +101,13 @@ export function useMobileSessionFoundation() {
   )
   // iPhone Duo (2026-10-27): unfolded too, by choice: keys back under the terminal, the terminal full
   // width, and the panel actions in the header's top right beside the status column, as folded.
+  // Folded on its side the strip is on either edge (the rail is right-only), and the session runs
+  // full width under it like the other screens (2026-10-27 on device: an 84pt empty column on the left).
+  const coverCorner = useCoverCorner()
   const sessionSideRail: MobileSessionSideRailMode =
-    !sideRailAvailable || !isScreenFocused ? null : ('fullWidth' as MobileSessionSideRailMode)
+    (!sideRailAvailable && coverCorner === null) || !isScreenFocused
+      ? null
+      : ('fullWidth' as MobileSessionSideRailMode)
   const statusColumnWidth = useWindowSafeAreaInsets().right
   const foldedFullWidth = sessionSideRail === 'fullWidth'
   const insets = useMemo(

@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, View } from 'react-native'
 import { List, Plus, Search, SquareTerminal, UserCircle, X } from 'lucide-react-native'
-import { useSideRailContent } from '../layout/side-rail'
+import { SIDE_RAIL_DRAWN_BY_SCREEN, useSideRailContent } from '../layout/side-rail'
 import { colors, radii, spacing } from '../theme/mobile-theme'
 import type { HostScreenController } from './use-host-screen-controller'
 
@@ -93,7 +93,11 @@ function HostScreenSideRail({ controller }: { controller: HostScreenController }
 /** The folded host list's actions, in the side rail instead of the toolbar and floating button. */
 export function usePublishHostScreenSideRail(controller: HostScreenController): void {
   useSideRailContent(
-    controller.actionsInRail ? <HostScreenSideRail controller={controller} /> : null
+    controller.actionsInRail ? (
+      <HostScreenSideRail controller={controller} />
+    ) : controller.claimsCoverStrip ? (
+      SIDE_RAIL_DRAWN_BY_SCREEN
+    ) : null
   )
 }
 

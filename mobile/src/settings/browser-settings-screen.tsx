@@ -11,6 +11,7 @@ import {
 } from '../storage/preferences'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
 import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
 
 const LINK_MODE_OPTIONS: PickerOption<MobileTerminalLinkOpenMode>[] = [
   {
@@ -39,6 +40,9 @@ export default function BrowserSettingsScreen({
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side: full width under the strip, the title row beside the block on the camera's line.
+  const { topCorner: coverTopCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle(spacing.lg)
   const [linkMode, setLinkMode] = useState<MobileTerminalLinkOpenMode>('orca-browser')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -93,9 +97,13 @@ export default function BrowserSettingsScreen({
   }, [])
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.container, { paddingTop: coverTopCorner ? 0 : insets.top + spacing.sm }]}>
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           accessibilityRole="button"

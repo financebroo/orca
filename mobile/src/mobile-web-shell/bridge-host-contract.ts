@@ -5,6 +5,7 @@ import type { BridgeRefusal } from './bridge/bridge-caps'
 import type { BridgeInitHost, BridgeInitRoute } from './bridge/bridge-envelope'
 import type { BridgeClearableRouteParam } from './bridge/bridge-route-update'
 import type { BridgeSafeAreaInsets } from './bridge/bridge-safe-area-insets'
+import type { BridgeCoverCorner } from './bridge/bridge-cover-corner'
 import type { BridgeFoldDivision } from './bridge/bridge-fold-division'
 import type { BridgeHapticsKind } from './bridge/bridge-haptics-notify'
 import type { BridgeErrorCapture } from './bridge/bridge-error-capture'
@@ -74,6 +75,8 @@ export type BridgeHostOptions = {
   foldDivision?: BridgeFoldDivision | null
   /** Where the side rail can start below the status column; moved later with `publishSideRailTop`. */
   sideRailTop?: number | null
+  /** The folded Duo's corner block when on its side; moved later with `publishCoverCorner`. */
+  coverCorner?: BridgeCoverCorner | null
   // Read identity at forward time because this host outlives renders; replace the page placeholder as init promised or the desktop refuses spoofed sends.
   readClientIdentity: () => string | null
   // Read allowlisted storage synchronously for every init so document reloads include writes made since mount.

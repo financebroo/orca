@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react'
 import { useWindowDimensions } from 'react-native'
 import { requireOptionalNativeModule, type EventSubscription } from 'expo-modules-core'
 import type { FoldDivision } from './fold-division'
-import { sideRailTopFromOcclusions, type WindowRect } from './window-regions'
+import { sideRailTopFromOcclusions, type CoverCorner, type WindowRect } from './window-regions'
 
 type WindowRegions = { division: FoldDivision | null; occlusions: readonly WindowRect[] }
 
@@ -50,4 +50,14 @@ export function useSideRailTop(): number | null {
   const { occlusions } = useWindowRegions()
   const { width } = useWindowDimensions()
   return sideRailTopFromOcclusions(occlusions, width)
+}
+
+/** The window's occluded rects (status column, camera), in window points. */
+export function useOcclusions(): readonly WindowRect[] {
+  return useWindowRegions().occlusions
+}
+
+/** Only the page reads a corner block the shell measured; natively it is measured directly. */
+export function useReportedCoverCorner(): CoverCorner | null {
+  return null
 }

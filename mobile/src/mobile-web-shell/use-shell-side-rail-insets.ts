@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import type { EdgeInsets } from 'react-native-safe-area-context'
-import { useWindowSafeAreaInsets } from '../layout/side-safe-area'
+import { useCoverCorner, useWindowSafeAreaInsets } from '../layout/side-safe-area'
 import {
   SIDE_RAIL_DRAWN_BY_SCREEN,
   useSideRailAvailable,
@@ -24,10 +24,18 @@ export function useShellSideRailInsets(insets: EdgeInsets, active: boolean): Edg
       return () => setFocused(false)
     }, [])
   )
-  const claimed = available && active && focused
+  // Folded on its side, the page also takes the status strip and keeps only its corner block clear.
+  const coverCorner = useCoverCorner()
+  const claimed = (available || coverCorner !== null) && active && focused
   useSideRailContent(claimed ? SIDE_RAIL_DRAWN_BY_SCREEN : null)
   // iPhone Duo (2026-10-27): the root zeroes the top inset unfolded in portrait, so the page saw no
   // status block and its header never stacked beside it; the page's own SideSafeArea zeroes it again.
   const withTop = { ...insets, top: windowInsets.top }
-  return claimed ? { ...withTop, right: windowInsets.right } : withTop
+  return claimed
+    ? {
+        ...withTop,
+        right: windowInsets.right,
+        ...(coverCorner !== null ? { left: windowInsets.left } : null)
+      }
+    : withTop
 }

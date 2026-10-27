@@ -5,6 +5,7 @@ import type {
   BridgeInitRoute
 } from './bridge-envelope'
 import { ZERO_SAFE_AREA_INSETS, type BridgeSafeAreaInsets } from './bridge-safe-area-insets'
+import type { BridgeCoverCorner } from './bridge-cover-corner'
 import type { BridgeFoldDivision } from './bridge-fold-division'
 
 export type BridgeShellSession = {
@@ -21,6 +22,8 @@ export type BridgeShellSession = {
   foldDivision: BridgeFoldDivision | null
   /** Where the side rail can start below the status column; null when unknown. */
   sideRailTop: number | null
+  /** The folded Duo's corner block when on its side; null when none or the shell is older. */
+  coverCorner: BridgeCoverCorner | null
   host: BridgeInitHost | null
   storage: Readonly<Record<string, string>>
   // Oversize keys are withheld from storage and reject writes locally; older shells omit this additive field (ruling 33.6).
@@ -43,6 +46,7 @@ export function readShellSession(
     keyboardInset: message.keyboardInset ?? 0,
     foldDivision: message.foldDivision ?? null,
     sideRailTop: message.sideRailTop ?? null,
+    coverCorner: message.coverCorner ?? null,
     host: message.host ?? null,
     storage: message.storage ?? {},
     storageOversize: message.storageOversize ?? [],

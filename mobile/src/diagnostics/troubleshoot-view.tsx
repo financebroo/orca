@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
 import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
 import { troubleshootCommonIssues } from './troubleshoot-common-issues'
 import { troubleshootScreenStyles as styles } from './troubleshoot-screen-styles'
 export type DiagnosticStatus = 'idle' | 'running' | 'done'
@@ -54,15 +55,25 @@ export function TroubleshootView({
 }) {
   const insets = useSafeAreaInsets()
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side: full width under the strip, the title row beside the block on the camera's line.
+  const { topCorner: coverTopCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle(spacing.lg)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const toggleSection = useCallback(
     (id: string) => setExpandedId((prev) => (prev === id ? null : id)),
     []
   )
   return (
-    <View ref={rootRef} style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <View
+      ref={rootRef}
+      style={[styles.container, { paddingTop: coverTopCorner ? 0 : insets.top + spacing.sm }]}
+    >
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           accessibilityRole="button"

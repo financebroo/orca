@@ -1,5 +1,6 @@
 import { readShellSession, type BridgeShellSession } from './bridge-client-session'
 import { bridgeRouteMoved } from './bridge-route-update'
+import { sameCoverCorner } from './bridge-cover-corner'
 import { sameFoldDivision } from './bridge-fold-division'
 import {
   sameSafeAreaInsets,
@@ -58,16 +59,20 @@ export function createBridgeClientShellSession(args: {
       const foldDivision = held === null || movedFold ? sentFold : held.foldDivision
       const sideRailTop = message.sideRailTop ?? null
       const movedRailTop = held !== null && held.sideRailTop !== sideRailTop
+      const sentCorner = message.coverCorner ?? null
+      const movedCorner = held !== null && !sameCoverCorner(held.coverCorner, sentCorner)
+      const coverCorner = held === null || movedCorner ? sentCorner : held.coverCorner
       session =
         update === null
-          ? { ...readShellSession(message), safeAreaInsets, foldDivision, sideRailTop }
+          ? { ...readShellSession(message), safeAreaInsets, foldDivision, sideRailTop, coverCorner }
           : {
               ...update,
               route: message.route ?? null,
               safeAreaInsets,
               keyboardInset,
               foldDivision,
-              sideRailTop
+              sideRailTop,
+              coverCorner
             }
       // Reprime on every init to repair refused stale generations after client rebuild; identical pane-update snapshots emit no transition.
       args.prime(message.connection)
@@ -85,7 +90,7 @@ export function createBridgeClientShellSession(args: {
           listener(keyboardInset)
         }
       }
-      if (movedFold || movedRailTop) {
+      if (movedFold || movedRailTop || movedCorner) {
         for (const listener of regionsListeners) {
           listener()
         }

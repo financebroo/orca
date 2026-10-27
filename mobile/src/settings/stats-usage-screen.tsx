@@ -5,14 +5,21 @@ import type { RpcClient } from '../transport/rpc-client'
 import { StatsUsagePanel } from '../stats/StatsUsagePanel'
 import { colors, spacing } from '../theme/mobile-theme'
 import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverHeaderRowStyle, useCoverStripScreen } from '../layout/cover-strip-screen'
 
 export default function StatsUsageScreen(props: { client: RpcClient | null; onBack: () => void }) {
   const insets = useSafeAreaInsets()
   const statusColumnPadding = useStatusColumnPadding()
+  const { topCorner } = useCoverStripScreen()
+  const coverHeaderRowStyle = useCoverHeaderRowStyle()
   return (
-    <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
+    <View style={[styles.container, { paddingTop: topCorner ? 0 : insets.top + spacing.sm }]}>
       <View
-        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        style={[
+          styles.topRow,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+          coverHeaderRowStyle
+        ]}
       >
         <Pressable
           style={styles.backButton}

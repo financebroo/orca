@@ -20,6 +20,7 @@ const { FRAME, WebView } = await vi.hoisted(async () => {
   return { FRAME: frame, WebView: View }
 })
 
+vi.mock('../layout/side-safe-area', () => ({ useCoverCorner: () => null }))
 vi.mock('react-native', () => ({
   Platform: { OS: 'web' },
   View: WebView,

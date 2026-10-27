@@ -23,9 +23,13 @@ import {
   PORTRAIT_NAME_CENTER_Y,
   usePortraitSessionChromeHeight
 } from '../layout/portrait-header-line'
-import { useStatusColumnPadding } from '../layout/side-safe-area'
+import { useCoverCorner, useStatusColumn, useStatusColumnPadding } from '../layout/side-safe-area'
+import { COVER_CAMERA_CENTER_FROM_EDGE, coverHeaderRowPaddingTop } from '../layout/window-regions'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import type { HostScreenController } from './use-host-screen-controller'
+
+// statusBar's minHeight: the host name over its descriptor line.
+const HEADER_ROW_HEIGHT = 34
 
 function isErrorVerdict(v: ConnectionVerdict): boolean {
   return v.kind === 'warning' || v.kind === 'unreachable' || v.kind === 'auth-failed'
@@ -51,6 +55,15 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
   const presentedConnState = useCalmConnectionState(connState, lastConnectedAt)
   // Folded Duo: these rows sit beside the status column; the list below runs full width.
   const statusColumnPadding = useStatusColumnPadding()
+  // Folded on its side with the block in a top corner, the top row steps around it.
+  const coverCorner = useCoverCorner()
+  const topCorner = !embedded && coverCorner?.top ? coverCorner : null
+  // Folded upright: the camera sits in the status column's top, COVER_CAMERA_CENTER_FROM_EDGE down.
+  const statusColumn = useStatusColumn()
+  const coverPortrait = !embedded && statusColumn?.cover === true
+  // Folded, upright or on its side either way round, the header is one row ending in the Workspace
+  // options gear.
+  const oneRow = !embedded && (coverCorner !== null || coverPortrait) && !actionsInRail
   const sessionChromeHeight = usePortraitSessionChromeHeight()
 
   return (
@@ -69,6 +82,23 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
         style={[
           styles.statusBar,
           statusColumnPadding > 0 && { paddingRight: statusColumnPadding + spacing.xs },
+          topCorner?.side === 'left' && { paddingLeft: topCorner.width },
+          topCorner?.side === 'right' && { paddingRight: topCorner.width + spacing.xs },
+          // iPhone Duo (2026-10-27): one row as tall as the block, with no top safe inset above it, so
+          // the camera sits inside the ribbon, and the row is centered on the camera (on device: a row below
+          // the inset left space above it, one at the camera's height left the camera below the
+          // ribbon, and one at the block's middle sat slightly above the camera).
+          topCorner && {
+            minHeight: topCorner.height,
+            paddingTop: coverHeaderRowPaddingTop(topCorner)
+          },
+          // iPhone Duo (2026-10-27): folded upright, the ribbon rises and the host name lines up
+          // with the camera, as on its side. No top safe inset (host-screen-view); the 34pt row is
+          // centered on the camera.
+          coverPortrait && {
+            paddingTop: COVER_CAMERA_CENTER_FROM_EDGE - HEADER_ROW_HEIGHT / 2,
+            paddingBottom: spacing.sm
+          },
           // Unfolded portrait: the host block is centered on the session title block's line. Its
           // center is 21pt down in the plain bar (4pt padding, 34pt row), so the difference is added.
           embedded &&
@@ -159,6 +189,62 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
               color={connState === 'connected' ? colors.textPrimary : colors.textMuted}
             />
           </Pressable>
+        ) : null}
+        {/* iPhone Duo (2026-10-27): folded on its side the toolbar row only added height, so its icons join
+            this row and Workspace options is the gear at the very right
+            (by preference, same as the unfolded sidebar). */}
+        {oneRow ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+            <Pressable
+              style={styles.searchToggle}
+              onPress={() =>
+                actions.navigateFromHostList(`/h/${encodeURIComponent(hostId)}/accounts`)
+              }
+              disabled={connState !== 'connected'}
+              accessibilityRole="button"
+              accessibilityLabel="Accounts"
+            >
+              <UserCircle
+                size={16}
+                color={connState === 'connected' ? colors.textSecondary : colors.textMuted}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.searchToggle}
+              onPress={() => actions.navigateFromHostList(`/h/${encodeURIComponent(hostId)}/tasks`)}
+              disabled={connState !== 'connected'}
+              accessibilityRole="button"
+              accessibilityLabel="Tasks"
+            >
+              <List
+                size={16}
+                color={connState === 'connected' ? colors.textSecondary : colors.textMuted}
+              />
+            </Pressable>
+            <Pressable
+              style={styles.searchToggle}
+              onPress={() => state.setShowSearch((s) => !s)}
+              accessibilityRole="button"
+              accessibilityLabel={state.showSearch ? 'Close search' : 'Search workspaces'}
+            >
+              {state.showSearch ? (
+                <X size={16} color={colors.textSecondary} />
+              ) : (
+                <Search size={16} color={colors.textSecondary} />
+              )}
+            </Pressable>
+            <Pressable
+              style={styles.searchToggle}
+              onPress={() => state.setShowWorkspaceOptions(true)}
+              accessibilityRole="button"
+              accessibilityLabel={workspaceOptionsAccessibilityLabel(controller.activeFilterCount)}
+            >
+              <Settings
+                size={16}
+                color={controller.activeFilterCount > 0 ? colors.accentBlue : colors.textSecondary}
+              />
+            </Pressable>
+          </View>
         ) : null}
         {embedded && onHideSidebar ? (
           <Pressable
@@ -272,11 +358,12 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
             </Pressable>
           </View>
         </View>
-      ) : (
+      ) : oneRow ? null : (
         <View
           style={[
             styles.toolbar,
-            statusColumnPadding > 0 && { paddingRight: statusColumnPadding + spacing.xs }
+            statusColumnPadding > 0 && { paddingRight: statusColumnPadding + spacing.xs },
+            topCorner?.side === 'right' && { paddingRight: topCorner.width + spacing.xs }
           ]}
         >
           <Pressable

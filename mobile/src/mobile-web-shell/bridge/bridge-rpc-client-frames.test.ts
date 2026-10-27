@@ -124,6 +124,7 @@ describe('bridge client handshake', () => {
       keyboardInset: 0,
       foldDivision: null,
       sideRailTop: null,
+      coverCorner: null,
       host: null,
       storage: {},
       storageOversize: [],

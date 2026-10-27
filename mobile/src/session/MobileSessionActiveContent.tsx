@@ -13,6 +13,7 @@ import type { MobileSessionController } from './use-mobile-session-controller'
 import { useWorkspaceExecutionHost } from '../navigation/workspace-execution-host'
 import { FileReader } from './MobileSessionFileReader'
 import { MarkdownReader } from './MobileSessionMarkdownReader'
+import { useCoverCorner } from '../layout/side-safe-area'
 
 function insetTerminalFrame(
   size: { width: number; height: number },
@@ -107,11 +108,15 @@ export function MobileSessionActiveContent({
   // Folded (2026-10-26): the grid runs full width right under the header; a
   // band above it wasted the top row. Without a measured column top, fall back to clearing its width.
   const foldedFullWidth = controller.sessionSideRail === 'fullWidth'
+  // Folded on its side the block is in a corner, not a column down the edge, so nothing is cleared.
+  const coverCorner = useCoverCorner() !== null
   // Fit the terminal to the pane area, which the status column (folded) and the hinge (laptop) inset.
   const paneInset = {
     top: 0,
     right:
-      foldedFullWidth && controller.statusColumnTop === null ? controller.statusColumnWidth : 0,
+      foldedFullWidth && controller.statusColumnTop === null && !coverCorner
+        ? controller.statusColumnWidth
+        : 0,
     bottom: foldBand.top !== null ? foldBand.height - foldBand.top : 0
   }
   const contentSizeRef = useRef<{ width: number; height: number } | null>(null)

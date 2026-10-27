@@ -2,7 +2,8 @@ import { Pressable, StyleSheet } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Plus } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
-import { useStatusColumn } from '../layout/side-safe-area'
+import { useCoverCorner, useStatusColumn } from '../layout/side-safe-area'
+import { COVER_CAMERA_CENTER_FROM_EDGE } from '../layout/window-regions'
 
 // Export diameter so worktree list reserves matching padding and last row stays tappable.
 export const FAB_SIZE = 48
@@ -28,11 +29,26 @@ export function NewWorkspaceFab({ onPress, disabled }: NewWorkspaceFabProps): Re
           right: Math.max(spacing.sm, statusColumn.centerFromRight - FOLDED_FAB_SIZE / 2),
           bottom: Math.max(spacing.sm, insets.bottom - spacing.sm)
         }
+  // Folded on its side with the block in the bottom-right corner, the button moves left of it.
+  const coverCorner = useCoverCorner()
+  const besideCorner =
+    coverCorner?.side === 'right' && !coverCorner.top
+      ? // Centered on the camera's line, so it reads as part of the block's row (2026-10-27 on device:
+        // 57pt up from the bottom it floated above the block).
+        {
+          right: coverCorner.width + spacing.sm,
+          bottom: COVER_CAMERA_CENTER_FROM_EDGE - FAB_SIZE / 2
+        }
+      : coverCorner !== null
+        ? // Block at the top: the bottom corner is free, so the button sits in it, as far from both edges.
+          { bottom: spacing.lg, right: spacing.lg }
+        : null
   return (
     <Pressable
       style={({ pressed }) => [
         styles.fab,
         folded ?? { bottom: spacing.xl + insets.bottom },
+        besideCorner,
         pressed && styles.fabPressed,
         disabled && styles.fabDisabled
       ]}

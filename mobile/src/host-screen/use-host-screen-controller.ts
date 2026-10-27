@@ -8,7 +8,7 @@ import { useActiveWorktreeScroll } from '../hooks/use-active-worktree-scroll'
 import { useNow } from '../hooks/use-now'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 import { useSideRailAvailable } from '../layout/side-rail'
-import { useStatusColumn } from '../layout/side-safe-area'
+import { useCoverCorner, useStatusColumn } from '../layout/side-safe-area'
 import {
   useForgetHostClient,
   useForceReconnect,
@@ -155,11 +155,14 @@ export function useHostScreenController({
     }, [])
   )
   // A sidebar is never at the window's right edge; the full-screen list is.
-  const actionsInRail = sideRailAvailable && !folded && !embedded && focused
+  // Folded on its side, the full-screen list runs under the status strip, keeping only its corner clear.
+  const claimsCoverStrip = useCoverCorner() !== null && !embedded && focused
+  const actionsInRail = sideRailAvailable && !folded && !embedded && focused && !claimsCoverStrip
 
   return {
     actions,
     actionsInRail,
+    claimsCoverStrip,
     activeFilterCount,
     activeWorktreeScroll,
     catalog,

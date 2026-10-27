@@ -9,6 +9,10 @@ import {
   type MobileTerminalLinkOpenMode
 } from '../storage/preferences'
 
+vi.mock('../layout/cover-strip-screen', () => ({
+  useCoverStripScreen: () => ({ topCorner: null, safeEdges: ['top'] }),
+  useCoverHeaderRowStyle: () => null
+}))
 vi.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',

@@ -1,4 +1,5 @@
 import { BRIDGE_MAX_PENDING_REQUESTS, BRIDGE_MAX_SUBSCRIPTIONS } from './bridge-caps'
+import type { BridgeCoverCorner } from './bridge-cover-corner'
 import type { BridgeFoldDivision } from './bridge-fold-division'
 import { MOBILE_WEB_SHELL_GRANTS } from '../page-route-policy'
 import {
@@ -35,6 +36,8 @@ export function createBridgeInitFrame(args: {
   foldDivision?: BridgeFoldDivision | null
   /** Where the side rail can start below the status column; null or absent when unknown. */
   sideRailTop?: number | null
+  /** The folded Duo's corner block when on its side; null or absent when none. */
+  coverCorner?: BridgeCoverCorner | null
   // Omit absent manifest pairs so older routing behavior remains available.
   pageRouteGrants?: readonly { pathname: string; grants: readonly string[] }[]
   granted: readonly string[]
@@ -68,6 +71,7 @@ export function createBridgeInitFrame(args: {
       : { keyboardInset: args.keyboardInset }),
     ...(args.foldDivision ? { foldDivision: { ...args.foldDivision } } : {}),
     ...(args.sideRailTop ? { sideRailTop: args.sideRailTop } : {}),
+    ...(args.coverCorner ? { coverCorner: { ...args.coverCorner } } : {}),
     pageRoutes: [...args.pageRoutes],
     // Copy entries so no frame retains access to the shell’s held route-grant objects.
     ...(args.pageRouteGrants === undefined
