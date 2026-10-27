@@ -94,8 +94,11 @@ export function useTerminalLivePendingInputFlush<TTabType extends string>({
 
   const sendQueuedMirrorPayload = useCallback(
     (handle: string, payload: string): Promise<boolean> =>
-      sendLiveTerminalInputRef.current(handle, payload, { predicted: true }),
-    [sendLiveTerminalInputRef]
+      // Without a predictor the sender must keep its own send-time prediction.
+      sendLiveTerminalInputRef.current(handle, payload, {
+        predicted: predictLiveInput !== undefined
+      }),
+    [predictLiveInput, sendLiveTerminalInputRef]
   )
 
   const runMirrorStep = useCallback<RunTerminalLiveMirrorStep>(
