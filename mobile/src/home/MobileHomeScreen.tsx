@@ -1,15 +1,18 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOpenMobileAccounts } from '../accounts/use-open-mobile-accounts'
 import { getProvenCachedWorktrees } from '../cache/worktree-cache'
 import { ActionSheetModal } from '../components/ActionSheetModal'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { getHostListActionSheetActions } from '../host-list-action-sheet-actions'
 import { hostRouteWithNotice } from '../host-route-notice'
+import { foldPosture, type FoldPosture } from '../layout/fold-division'
 import { useResponsiveLayout } from '../layout/responsive-layout'
+import { useWindowSafeAreaInsets } from '../layout/side-safe-area'
 import { useSideRailAvailable, useSideRailContent } from '../layout/side-rail'
+import { useFoldDivision } from '../layout/use-window-regions'
 import { triggerMediumImpact } from '../platform/haptics'
 import { useOpenMobileSession } from '../session/use-open-mobile-session'
 import { useOpenMobileTasks } from '../tasks/use-open-mobile-tasks'
@@ -37,6 +40,25 @@ import { MobileHomeTopBar } from './MobileHomeTopBar'
 import { useMobileHomeData } from './use-mobile-home-data'
 import { newWorkspaceOverlayHref } from '../new-workspace/new-workspace-overlay-route'
 
+const MIN_COLUMN_WIDTH = 280
+
+// Half folded book-style, the stats column ends at the hinge and the host list starts past it, so
+// each column sits whole on its own display. Null when flat or when a column would get too narrow.
+function resolveHingeColumns(
+  posture: FoldPosture,
+  leftInset: number,
+  areaWidth: number
+): { leftWidth: number; hingeWidth: number } | null {
+  if (posture.kind !== 'sideBySide') {
+    return null
+  }
+  const leftWidth = posture.leftEnd - leftInset
+  const hingeWidth = posture.rightStart - posture.leftEnd
+  const fits =
+    leftWidth >= MIN_COLUMN_WIDTH && areaWidth - leftWidth - hingeWidth >= MIN_COLUMN_WIDTH
+  return fits ? { leftWidth, hingeWidth } : null
+}
+
 export function MobileHomeScreen() {
   const data = useMobileHomeData()
   const insets = useSafeAreaInsets()
@@ -44,6 +66,12 @@ export function MobileHomeScreen() {
   // Tablet-sized windows (iPad, unfolded iPhone Duo either way up): one column wastes the width, so
   // stats get their own column. Not isWideLayout: the unfolded Duo upright is 626pt wide, under its cutoff.
   const splitColumns = isTabletLayout
+  const areaWidth = useSafeAreaFrame().width
+  const hingeColumns = resolveHingeColumns(
+    foldPosture(useFoldDivision()),
+    useWindowSafeAreaInsets().left,
+    areaWidth
+  )
   const [refreshKey, setRefreshKey] = useState(0)
   const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
   const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
@@ -193,7 +221,14 @@ export function MobileHomeScreen() {
       ) : splitColumns ? (
         <View style={styles.columns}>
           <ScrollView
-            style={styles.column}
+            // Always a fixed width, never added or dropped keys (2026-10-27 on the Duo): a width
+            // dropped on unfold stayed at its folded 455pt, and a flexBasis set on fold never
+            // applied, collapsing the column to zero. Flat it is half the row; folded it ends at the hinge.
+            style={{
+              width: hingeColumns ? hingeColumns.leftWidth : areaWidth / 2,
+              flexGrow: 0,
+              flexShrink: 0
+            }}
             contentContainerStyle={[
               styles.statsColumn,
               { paddingBottom: spacing.xl + insets.bottom }
@@ -209,7 +244,9 @@ export function MobileHomeScreen() {
               refreshKey={refreshKey}
             />
           </ScrollView>
-          <View style={styles.column}>{hostList}</View>
+          <View style={[styles.column, { marginLeft: hingeColumns?.hingeWidth ?? 0 }]}>
+            {hostList}
+          </View>
         </View>
       ) : (
         hostList
