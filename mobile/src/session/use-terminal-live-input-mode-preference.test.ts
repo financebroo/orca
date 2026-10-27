@@ -73,7 +73,7 @@ describe('terminal live input mode preference hook', () => {
     vi.mocked(saveDisabledTerminalLiveInputHandles).mockResolvedValue()
   })
 
-  it('merges pre-hydration edits with loaded disabled handles', async () => {
+  it('keeps every terminal on live input, ignoring saved opt-outs and turn-off taps', async () => {
     const load = createDeferred<DisabledTerminalLiveInputHandlesPreference>()
     vi.mocked(readDisabledTerminalLiveInputHandlesPreference).mockReturnValue(load.promise)
     const harness = createTerminalLiveInputModePreferenceHarness()
@@ -90,13 +90,7 @@ describe('terminal live input mode preference hook', () => {
       await load.promise
     })
 
-    expect([...harness.current.liveInputTerminalHandles]).toEqual(['pty-1'])
-    expect(saveDisabledTerminalLiveInputHandles).toHaveBeenCalledTimes(1)
-    expect(saveDisabledTerminalLiveInputHandles).toHaveBeenCalledWith(
-      'host-1',
-      'worktree-1',
-      new Set(['pty-2'])
-    )
+    expect([...harness.current.liveInputTerminalHandles]).toEqual(['pty-1', 'pty-2'])
     harness.unmount()
   })
 

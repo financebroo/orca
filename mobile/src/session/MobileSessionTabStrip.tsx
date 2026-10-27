@@ -22,6 +22,7 @@ import {
 } from './tab-strip-scroll'
 import { styles } from './mobile-session-styles'
 import { useKeyboardPersistingTaps } from '../platform/keyboard-persisting-taps'
+import { useResponsiveLayout } from '../layout/responsive-layout'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 const DOUBLE_TAP_RENAME_MS = 300
@@ -33,6 +34,7 @@ export function MobileSessionTabStrip({
   controller: MobileSessionController
   inTopBar: boolean
 }) {
+  const { isWideLayout } = useResponsiveLayout()
   const {
     connState,
     activeSessionTabId,
@@ -160,7 +162,10 @@ export function MobileSessionTabStrip({
     ]
   )
   return (
-    <View ref={tabBarKeepsKeyboard} style={inTopBar ? styles.tabBarInTopBar : styles.tabBar}>
+    <View
+      ref={tabBarKeepsKeyboard}
+      style={inTopBar ? styles.tabBarInTopBar : [styles.tabBar, isWideLayout && styles.tabBarWide]}
+    >
       {/* Why: tab taps must register on first press with the keyboard open instead of being eaten by dismissal (#5106). */}
       <View style={styles.tabScrollFrame}>
         <ScrollView

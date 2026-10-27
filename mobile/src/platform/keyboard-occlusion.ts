@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Keyboard } from 'react-native'
+import { Dimensions, Keyboard } from 'react-native'
 import { hostOs } from './host-os'
 
 export type SoftKeyboardState = { readonly height: number; readonly visible: boolean }
@@ -33,9 +33,22 @@ export function subscribeSoftKeyboard(
     onShow(event.endCoordinates.height, event.duration)
   )
   const hide = Keyboard.addListener(hideEvent, (event) => onHide(event.duration))
+  // iPhone Duo (2026-10-27): unfolding the Duo with the keyboard up drops the keyboard without a hide
+  // event, so the UI stayed lifted over nothing (owner). Recheck once the new window has settled.
+  let recheck: ReturnType<typeof setTimeout> | undefined
+  const resize = Dimensions.addEventListener('change', () => {
+    clearTimeout(recheck)
+    recheck = setTimeout(() => {
+      if (!Keyboard.isVisible()) {
+        onHide(0)
+      }
+    }, 400)
+  })
   return () => {
+    clearTimeout(recheck)
     show.remove()
     hide.remove()
+    resize.remove()
   }
 }
 

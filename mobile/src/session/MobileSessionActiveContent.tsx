@@ -16,11 +16,11 @@ import { MarkdownReader } from './MobileSessionMarkdownReader'
 
 function insetTerminalFrame(
   size: { width: number; height: number },
-  inset: { right: number; bottom: number }
+  inset: { top: number; right: number; bottom: number }
 ): { width: number; height: number } {
   return {
     width: Math.max(0, size.width - inset.right),
-    height: Math.max(0, size.height - inset.bottom)
+    height: Math.max(0, size.height - inset.top - inset.bottom)
   }
 }
 
@@ -104,29 +104,38 @@ export function MobileSessionActiveContent({
     toastAnimatedStyle,
     createTabBusy
   } = controller
+  // Folded (2026-10-26): the grid runs full width right under the header; a
+  // band above it wasted the top row. Without a measured column top, fall back to clearing its width.
+  const foldedFullWidth = controller.sessionSideRail === 'fullWidth'
   // Fit the terminal to the pane area, which the status column (folded) and the hinge (laptop) inset.
   const paneInset = {
-    right: controller.sessionSideRail === 'fullWidth' ? controller.statusColumnWidth : 0,
+    top: 0,
+    right:
+      foldedFullWidth && controller.statusColumnTop === null ? controller.statusColumnWidth : 0,
     bottom: foldBand.top !== null ? foldBand.height - foldBand.top : 0
   }
   const contentSizeRef = useRef<{ width: number; height: number } | null>(null)
-  const { right: paneInsetRight, bottom: paneInsetBottom } = paneInset
+  const { top: paneInsetTop, right: paneInsetRight, bottom: paneInsetBottom } = paneInset
   const notifyTerminalFrameRef = useRef(notifyTerminalFrame)
   notifyTerminalFrameRef.current = notifyTerminalFrame
-  const lastInsetRef = useRef({ right: paneInsetRight, bottom: paneInsetBottom })
+  const lastInsetRef = useRef({ top: paneInsetTop, right: paneInsetRight, bottom: paneInsetBottom })
   useEffect(() => {
     // The hinge or fold can move these insets without a new layout of the frame.
     const last = lastInsetRef.current
-    if (last.right === paneInsetRight && last.bottom === paneInsetBottom) {
+    if (
+      last.top === paneInsetTop &&
+      last.right === paneInsetRight &&
+      last.bottom === paneInsetBottom
+    ) {
       return
     }
-    lastInsetRef.current = { right: paneInsetRight, bottom: paneInsetBottom }
+    lastInsetRef.current = { top: paneInsetTop, right: paneInsetRight, bottom: paneInsetBottom }
     if (contentSizeRef.current) {
       notifyTerminalFrameRef.current(
         insetTerminalFrame(contentSizeRef.current, lastInsetRef.current)
       )
     }
-  }, [paneInsetRight, paneInsetBottom])
+  }, [paneInsetTop, paneInsetRight, paneInsetBottom])
   const content = showLoadingState ? (
     <View style={styles.emptyState}>
       <ActivityIndicator size="small" color={colors.textSecondary} />
@@ -248,7 +257,8 @@ export function MobileSessionActiveContent({
       <View
         style={[
           styles.terminalPaneArea,
-          controller.sessionSideRail === 'fullWidth' && { right: controller.statusColumnWidth },
+          paneInsetTop > 0 && { top: paneInsetTop },
+          paneInsetRight > 0 && { right: paneInsetRight },
           foldBand.top !== null && { bottom: foldBand.height - foldBand.top }
         ]}
       >
@@ -309,6 +319,7 @@ export function MobileSessionActiveContent({
         keyboardInset={keyboardLift}
         bottomInset={insets.bottom}
         fitScreenCorners={controller.sessionSideRail === 'fullWidth'}
+        textScale={terminalTextScale}
       />
       {toastMessage && (
         <Animated.View pointerEvents="none" style={[styles.toast, toastAnimatedStyle]}>

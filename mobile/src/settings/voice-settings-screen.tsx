@@ -5,6 +5,7 @@ import type { VoiceSettingsOperations } from './voice-settings-operations'
 import { voiceSettingsStyles as styles } from './voice-settings-styles'
 import { ChevronLeft, ChevronRight } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { BottomDrawer } from '../components/BottomDrawer'
 import { MobileSegmentedControl } from '../components/MobileSegmentedControl'
 import { VoiceModelList } from '../components/VoiceModelList'
@@ -34,6 +35,7 @@ export default function VoiceSettingsScreen({
   onBack: () => void
 }): React.JSX.Element {
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
   const [setup, setSetup] = useState<MobileSpeechSetup | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -167,7 +169,9 @@ export default function VoiceSettingsScreen({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back"
@@ -197,7 +201,15 @@ export default function VoiceSettingsScreen({
           showsVerticalScrollIndicator={false}
         >
           <Text style={styles.groupHeading}>DICTATION</Text>
-          <View style={[styles.section, styles.sectionTopGap]}>
+          {/* iPhone Duo (2026-10-27): folded, this section sits beside the status column and the
+              switch landed under the clock; later sections are below it and keep full width. */}
+          <View
+            style={[
+              styles.section,
+              styles.sectionTopGap,
+              statusColumnPadding > 0 && { marginRight: statusColumnPadding - spacing.lg }
+            ]}
+          >
             <View style={styles.row}>
               <View style={styles.rowContent}>
                 <Text style={styles.rowLabel}>Enable Voice Dictation</Text>

@@ -4,6 +4,7 @@ import { MobileSourceControlPanel } from '../source-control/MobileSourceControlP
 import { MobileFileExplorerPanel } from '../files/MobileFileExplorerPanel'
 import { mobilePrSidebarStyles } from '../components/pr-sidebar/mobile-pr-sidebar-styles'
 import { useMobileDockResize } from './use-mobile-dock-resize'
+import { ResizeEdge } from '../layout/resize-edge'
 import type { ActivePanel } from './session-panel-host'
 
 type Props = {
@@ -30,12 +31,18 @@ export function SessionDockColumn({
   onFileOpenStart,
   onOpenedFileDiff
 }: Props) {
-  const { dockWidth, panHandlers } = useMobileDockResize(availableWidth)
+  const { dockWidth, startResize, dragResize, endResize } = useMobileDockResize(availableWidth)
   return (
     <View style={[mobilePrSidebarStyles.dockColumn, { width: dockWidth }]}>
       {/* Dedicated drag handle over the dock's left border — a leaf overlay so the
           inner ScrollView can't intercept the gesture on Android. */}
-      <View style={styles.resizeHandle} {...panHandlers} />
+      <ResizeEdge
+        style={styles.resizeHandle}
+        border="left"
+        onStart={startResize}
+        onDrag={dragResize}
+        onEnd={endResize}
+      />
       <DockPanelContent
         activePanel={activePanel}
         hostId={hostId}

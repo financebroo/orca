@@ -8,6 +8,16 @@ import type { MobileSessionController } from '../session/use-mobile-session-cont
 import { MobileSessionHeader } from '../session/MobileSessionHeader'
 import HostGroupLayout from '../../app/h/_layout'
 
+// resize-edge pulls in react-native-gesture-handler, which vitest cannot parse.
+vi.mock('./side-safe-area', () => ({
+  ClearStatusColumn: ({ children }: { children: unknown }) => children,
+  useStatusColumn: () => null,
+  useStatusColumnPadding: () => 0,
+  useWindowSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 })
+}))
+vi.mock('./resize-edge', () => ({ ResizeEdge: () => null }))
+// PickerModal pulls in the bottom drawer's gesture handler, which vitest cannot parse.
+vi.mock('../components/PickerModal', () => ({ PickerModal: () => null }))
 vi.mock('react-native', () => ({
   View: 'View',
   Text: 'Text',

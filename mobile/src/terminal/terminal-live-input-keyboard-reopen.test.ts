@@ -12,6 +12,8 @@ describe('reopening a focused live input whose keyboard is hidden', () => {
     host.os = 'android'
     expect(reopensFocusedInputWhenKeyboardHidden()).toBe(true)
     host.os = 'ios'
+    expect(reopensFocusedInputWhenKeyboardHidden()).toBe(true)
+    host.os = 'web'
     expect(reopensFocusedInputWhenKeyboardHidden()).toBe(false)
   })
 })

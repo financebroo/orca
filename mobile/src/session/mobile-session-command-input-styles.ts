@@ -93,6 +93,15 @@ export const mobileSessionCommandInputStyles = StyleSheet.create({
     minWidth: 36,
     alignItems: 'center'
   },
+  // iPhone Duo (2026-10-27): keyboard down, keys grow from ~26pt to ~40pt; scrolling the short row at the
+  // bottom edge kept triggering the iOS home/app-switch gesture.
+  accessoryKeyTall: {
+    paddingVertical: spacing.sm + 3,
+    justifyContent: 'center'
+  },
+  accessoryBarTall: {
+    paddingBottom: spacing.sm
+  },
   accessoryKeyPressed: {
     backgroundColor: colors.borderSubtle
   },
@@ -117,6 +126,25 @@ export const mobileSessionCommandInputStyles = StyleSheet.create({
   },
   accessoryKeyTextDisabled: {
     color: colors.textMuted
+  },
+  // Key-row inputs: the wide keyboard key, then photo and mic sized like the other keys.
+  keyRowKeyboardKey: {
+    minWidth: 64
+  },
+  keyRowKeyboardKeyActive: {
+    backgroundColor: colors.surfaceBright
+  },
+  keyRowActionKey: {
+    backgroundColor: colors.bgRaised,
+    alignSelf: 'stretch',
+    minWidth: 40,
+    marginLeft: spacing.xs,
+    marginVertical: spacing.xs,
+    borderRadius: radii.button,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center'
   },
   keyboardDismissKey: {
     alignItems: 'center',

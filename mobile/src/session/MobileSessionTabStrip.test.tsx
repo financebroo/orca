@@ -24,6 +24,9 @@ vi.mock('./MobileSessionHeaderIconButton', () => ({ MobileSessionHeaderIconButto
 vi.mock('./QuickCommandsTabButton', () => ({ QuickCommandsTabButton: () => null }))
 vi.mock('./mobile-session-styles', () => ({ styles: {} }))
 vi.mock('../platform/keyboard-persisting-taps', () => ({ useKeyboardPersistingTaps: () => null }))
+vi.mock('../layout/responsive-layout', () => ({
+  useResponsiveLayout: () => ({ isWideLayout: false })
+}))
 vi.mock('../platform/keyboard-occlusion', () => ({
   useSoftKeyboard: () => ({ height: 0, visible: false })
 }))

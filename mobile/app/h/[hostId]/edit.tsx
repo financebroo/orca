@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, useRouter } from 'expo-router'
 import { ChevronLeft } from 'lucide-react-native'
 import { colors, radii, spacing, typography } from '../../../src/theme/mobile-theme'
+import { useStatusColumnPadding } from '../../../src/layout/side-safe-area'
 import { loadHosts, updateHostNameAndEndpoint } from '../../../src/transport/host-store'
 import { displayHostEndpoint } from '../../../src/transport/host-endpoint'
 import { resolveHostEndpointEdit } from '../../../src/transport/host-endpoint-edit'
@@ -24,6 +25,7 @@ import { hostOs } from '../../../src/platform/host-os'
 export default function EditHostScreen() {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
   const { hostId } = useLocalSearchParams<{ hostId: string }>()
   const primeHosts = usePrimeHosts()
   const refreshHostClient = useRefreshHostClient()
@@ -160,7 +162,9 @@ export default function EditHostScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           style={styles.backButton}
           onPress={leave}

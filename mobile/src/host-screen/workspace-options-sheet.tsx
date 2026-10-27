@@ -65,9 +65,31 @@ export function WorkspaceOptionsSheet({ controller }: { controller: HostScreenCo
       onClose={() => state.setShowWorkspaceOptions(false)}
       onAfterClose={pager.forget}
       scrollResetKey={pager.page}
+      // iPhone Duo (2026-10-27): rows dragged the sheet instead of scrolling; only the handle and the
+      // title block move it now.
+      dragContentToDismiss={false}
+      header={pager.page === null ? <WorkspaceOptionsHeader controller={controller} /> : undefined}
     >
       <WorkspaceOptionsContent controller={controller} pager={pager} />
     </BottomDrawer>
+  )
+}
+
+function WorkspaceOptionsHeader({ controller }: { controller: HostScreenController }) {
+  const { settings } = controller
+  return (
+    <View style={styles.filterModalHeader}>
+      <View style={styles.filterModalHeading}>
+        <Text style={styles.filterModalTitle}>{WORKSPACE_OPTIONS_TITLE}</Text>
+        <Text style={styles.filterModalSubtitle}>{WORKSPACE_VIEW_SHARED_NOTE}</Text>
+        <WorkspaceOptionsPending settings={settings} />
+      </View>
+      {controller.activeFilterCount > 0 && (
+        <Pressable onPress={settings.clearFilters}>
+          <Text style={styles.clearFiltersText}>Clear filters</Text>
+        </Pressable>
+      )}
+    </View>
   )
 }
 
@@ -94,7 +116,7 @@ function WorkspaceOptionsContent({
   controller: HostScreenController
   pager: OptionPagerControls<WorkspaceViewOptionKey>
 }) {
-  const { settings, state } = controller
+  const { state } = controller
   const hosts = useWorkspaceOptionHosts(controller)
   const sections = getShownWorkspaceViewSections({
     groupBy: state.view.groupBy,
@@ -140,19 +162,6 @@ function WorkspaceOptionsContent({
 
   const main = (
     <>
-      <View style={styles.filterModalHeader}>
-        <View style={styles.filterModalHeading}>
-          <Text style={styles.filterModalTitle}>{WORKSPACE_OPTIONS_TITLE}</Text>
-          <Text style={styles.filterModalSubtitle}>{WORKSPACE_VIEW_SHARED_NOTE}</Text>
-          <WorkspaceOptionsPending settings={settings} />
-        </View>
-        {controller.activeFilterCount > 0 && (
-          <Pressable onPress={settings.clearFilters}>
-            <Text style={styles.clearFiltersText}>Clear filters</Text>
-          </Pressable>
-        )}
-      </View>
-
       {sections.map(({ section, options }) => {
         const sectionLabel = WORKSPACE_VIEW_SECTION_LABELS[section]
         const bareRows: ReactNode[] = []

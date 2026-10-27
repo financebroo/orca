@@ -36,6 +36,8 @@ const env = vi.hoisted(
   })
 )
 
+// resize-edge pulls in react-native-gesture-handler, which vitest cannot parse.
+vi.mock('../layout/resize-edge', () => ({ ResizeEdge: () => null }))
 vi.mock('react-native', () => ({
   ...mocks['react-native'](),
   Platform: {

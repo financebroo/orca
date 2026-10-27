@@ -474,7 +474,7 @@ describe('host sidebar width preference', () => {
   })
 
   it('clamps saved widths to the supported sidebar range', () => {
-    expect(clampHostSidebarWidth(270)).toBe(280)
+    expect(clampHostSidebarWidth(170)).toBe(180)
     expect(clampHostSidebarWidth(570)).toBe(560)
     expect(clampHostSidebarWidth(337.6)).toBe(338)
   })
@@ -509,7 +509,7 @@ describe('host sidebar width preference', () => {
 
 describe('host dock width preference', () => {
   it('clamps saved widths to the supported dock range', () => {
-    expect(clampHostDockWidth(270)).toBe(280)
+    expect(clampHostDockWidth(170)).toBe(180)
     expect(clampHostDockWidth(570)).toBe(560)
     expect(clampHostDockWidth(337.6)).toBe(338)
   })

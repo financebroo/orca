@@ -2,10 +2,14 @@ import { RefreshCw, Settings } from 'lucide-react-native'
 import { Pressable, StyleSheet, Text, View } from 'react-native'
 import { OrcaLogo } from '../components/OrcaLogo'
 import { colors, spacing } from '../theme/mobile-theme'
+import { useStatusColumn, useStatusColumnPadding } from '../layout/side-safe-area'
+import { PORTRAIT_CLOCK_CENTER_Y } from '../layout/portrait-header-line'
+
+const ICON_BUTTON_SIZE = 36
 
 /**
- * `onRefresh` adds the Stats & Usage refresh beside the gear (two-column home). No
- * `onOpenSettings` hides the gear: unfolded landscape moves both into the side rail.
+ * No `onOpenSettings` hides the gear: unfolded landscape moves it into the side rail. `onRefresh`
+ * adds the Stats & Usage refresh beside it (unfolded portrait, which has no rail).
  */
 export function MobileHomeTopBar({
   onOpenSettings,
@@ -14,8 +18,18 @@ export function MobileHomeTopBar({
   onOpenSettings?: () => void
   onRefresh?: () => void
 }) {
+  const statusColumn = useStatusColumn()
+  const statusColumnPadding = useStatusColumnPadding()
+  // Unfolded portrait (the corner status block): the row sits on the clock's line, like the host header.
+  const onClockLine = statusColumn !== null && !statusColumn.cover
   return (
-    <View style={styles.topBar}>
+    <View
+      style={[
+        styles.topBar,
+        statusColumnPadding > 0 && { paddingRight: statusColumnPadding },
+        onClockLine && { paddingTop: PORTRAIT_CLOCK_CENTER_Y - ICON_BUTTON_SIZE / 2 }
+      ]}
+    >
       <View style={styles.brandLockup}>
         <View style={styles.logoMark}>
           <OrcaLogo size={18} />
@@ -64,9 +78,9 @@ const styles = StyleSheet.create({
   brandName: { color: colors.textPrimary, fontSize: 17, fontWeight: '700' },
   actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   iconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: ICON_BUTTON_SIZE,
+    height: ICON_BUTTON_SIZE,
+    borderRadius: ICON_BUTTON_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center'
   },

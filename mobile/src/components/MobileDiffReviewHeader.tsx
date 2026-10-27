@@ -1,6 +1,7 @@
 import { FlatList, Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ListChecks, MoreHorizontal } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import type { MobileDiffReviewQueueFilter } from '../session/mobile-diff-review-queue'
 import { REVIEW_FILTERS, mobileReviewCountLabel } from '../session/mobile-diff-review-screen-model'
 import { shouldShowTrigger } from './mobile-pr-sidebar-presentation'
@@ -35,6 +36,7 @@ export function MobileDiffReviewHeader({
   onOpenPRSidebar,
   onSelectFilter
 }: Props) {
+  const statusColumnPadding = useStatusColumnPadding()
   // Show PR icon on narrow/overlay GitHub repos; wide docked sidebar needs no trigger.
   const showPRTrigger = shouldShowTrigger({
     isGithubRepo: prSidebarIsGithubRepo,
@@ -43,7 +45,9 @@ export function MobileDiffReviewHeader({
   })
   return (
     <View style={styles.header}>
-      <View style={styles.topBar}>
+      <View
+        style={[styles.topBar, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           style={({ pressed }) => [styles.iconButton, pressed && styles.iconButtonPressed]}
           onPress={onBack}

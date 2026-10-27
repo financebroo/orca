@@ -10,6 +10,7 @@ import {
   type MobileTerminalLinkOpenMode
 } from '../storage/preferences'
 import { colors, radii, spacing, typography } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 
 const LINK_MODE_OPTIONS: PickerOption<MobileTerminalLinkOpenMode>[] = [
   {
@@ -37,6 +38,7 @@ export default function BrowserSettingsScreen({
 }): React.JSX.Element {
   const router = useRouter()
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
   const [linkMode, setLinkMode] = useState<MobileTerminalLinkOpenMode>('orca-browser')
   const [pickerOpen, setPickerOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -92,7 +94,9 @@ export default function BrowserSettingsScreen({
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back"

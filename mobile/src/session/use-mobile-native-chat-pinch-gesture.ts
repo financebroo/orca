@@ -1,14 +1,19 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Gesture } from 'react-native-gesture-handler'
 import type { ComposedGesture } from 'react-native-gesture-handler'
 import { quantizeFontScale } from './mobile-native-chat-message-text'
 
 // Anchor each pinch on the committed scale so successive gestures compound.
-export function useMobileNativeChatPinchGesture(): {
+export function useMobileNativeChatPinchGesture(textScale = 1): {
   fontScale: number
   pinchGesture: ComposedGesture
 } {
-  const [fontScale, setFontScale] = useState(1)
+  const [fontScale, setFontScale] = useState(() => quantizeFontScale(textScale))
+  // iPhone Duo (2026-10-27): the header's text-size picker left chat at 100%; a new setting now wins
+  // over an earlier pinch, and pinching still adjusts from there.
+  useEffect(() => {
+    setFontScale(quantizeFontScale(textScale))
+  }, [textScale])
   const fontScaleRef = useRef(1)
   fontScaleRef.current = fontScale
   const pinchBase = useRef(1)

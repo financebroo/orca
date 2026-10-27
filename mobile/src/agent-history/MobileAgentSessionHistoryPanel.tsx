@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, TextInput, View } from 'react-nativ
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ChevronLeft, RefreshCw } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { useWorkspaceClient } from '../transport/use-workspace-client'
 import { useWorkspaceRouteHandoff } from '../navigation/workspace-route-handoff'
 import { worktreeCatalogRead } from '../worktree/worktree-catalog-operations'
@@ -53,6 +54,7 @@ function MobileAgentSessionHistoryPanelContent({
 }: MobileAgentSessionHistoryPanelProps) {
   // Use handoff, not useRouter: resumed session is a native route outside this single-document page.
   const router = useWorkspaceRouteHandoff()
+  const statusColumnPadding = useStatusColumnPadding()
   const { client, state: connState } = useWorkspaceClient(hostId)
   const claimResumeOwnership = useMobileResumeOperationOwnership(
     hostId,
@@ -261,7 +263,9 @@ function MobileAgentSessionHistoryPanelContent({
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.header} edges={['top']}>
-        <View style={styles.topBar}>
+        <View
+          style={[styles.topBar, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        >
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
             onPress={() => router.back()}
@@ -313,7 +317,12 @@ function MobileAgentSessionHistoryPanelContent({
         </View>
       ) : (
         <>
-          <View style={styles.scopeTabs}>
+          <View
+            style={[
+              styles.scopeTabs,
+              statusColumnPadding > 0 && { paddingRight: statusColumnPadding }
+            ]}
+          >
             {SCOPE_TABS.map((tab) => {
               const active = scope === tab.scope
               return (

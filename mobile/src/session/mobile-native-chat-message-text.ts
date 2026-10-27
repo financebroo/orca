@@ -1,5 +1,7 @@
-const FONT_SCALE_MIN = 0.8
-const FONT_SCALE_MAX = 1.8
+// iPhone Duo (2026-10-27): 0.5-2, the terminal text-size presets' range; 0.8 made Smallest (50%) look
+// the same as Smaller (75%) in chat.
+const FONT_SCALE_MIN = 0.5
+const FONT_SCALE_MAX = 2
 
 function clampFontScale(scale: number): number {
   if (Number.isNaN(scale)) {

@@ -30,8 +30,8 @@ describe('quantizeFontScale', () => {
     expect(quantizeFontScale(1.01)).toBe(1)
     expect(quantizeFontScale(1.024)).toBe(1)
     expect(quantizeFontScale(1.03)).toBe(1.05)
-    expect(quantizeFontScale(5)).toBe(1.8)
-    expect(quantizeFontScale(0.1)).toBe(0.8)
+    expect(quantizeFontScale(5)).toBe(2)
+    expect(quantizeFontScale(0.1)).toBe(0.5)
     expect(quantizeFontScale(Number.NaN)).toBe(1)
   })
 
@@ -40,7 +40,8 @@ describe('quantizeFontScale', () => {
     for (let i = 0; i <= 600; i++) {
       committed.add(quantizeFontScale(0.7 + i * 0.002))
     }
-    expect(committed.size).toBeLessThanOrEqual(Math.round(1 / FONT_SCALE_STEP) + 1)
+    // The sweep spans 0.7-1.9, all inside the 0.5-2 range.
+    expect(committed.size).toBeLessThanOrEqual(Math.round(1.2 / FONT_SCALE_STEP) + 1)
   })
 })
 

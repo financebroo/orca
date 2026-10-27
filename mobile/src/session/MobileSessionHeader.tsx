@@ -1,13 +1,20 @@
-import { View, Text, Pressable } from 'react-native'
+import { View, Text, Pressable, StyleSheet } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { ChevronLeft, PanelLeftOpen } from 'lucide-react-native'
 import { MobileSessionHeaderIconButton } from './MobileSessionHeaderIconButton'
 import { MobileSessionPanelActions } from './MobileSessionPanelActions'
 import { MobileSessionTabStrip } from './MobileSessionTabStrip'
+import { MobileSessionViewControls } from './MobileSessionViewControls'
 import { StatusDot } from '../components/StatusDot'
 import { styles } from './mobile-session-styles'
 import { useHostSidebarReveal } from '../layout/host-sidebar-reveal'
 import { useResponsiveLayout } from '../layout/responsive-layout'
+import {
+  PORTRAIT_CLOCK_CENTER_Y,
+  PORTRAIT_NAME_CENTER_Y,
+  PORTRAIT_SESSION_BAR_HEIGHT
+} from '../layout/portrait-header-line'
+import { useStatusColumn } from '../layout/side-safe-area'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 export function MobileSessionHeader({ controller }: { controller: MobileSessionController }) {
@@ -32,7 +39,12 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
   const { sessionSideRail, statusColumnWidth } = controller
   // Why: a sideways phone is ~390pt tall, so the tabs share the top bar instead of taking a second row.
   const hasTabs = visibleTabs.length > 0
-  const tabsInTopBar = useResponsiveLayout().isLandscapePhone && hasTabs
+  const { isLandscapePhone, isWideLayout } = useResponsiveLayout()
+  const tabsInTopBar = isLandscapePhone && hasTabs
+  // iPhone Duo (2026-10-27): unfolded portrait, the header runs up beside the top-right status block,
+  // so its six icons stack in two rows of three (view controls over panel actions) left of it.
+  const statusBlock = useStatusColumn()
+  const iconsStacked = isWideLayout && statusBlock !== null && sessionSideRail !== 'fullWidth'
   const tabStrip = hasTabs ? (
     <MobileSessionTabStrip controller={controller} inTopBar={tabsInTopBar} />
   ) : null
@@ -44,22 +56,40 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
       ]}
       edges={['top']}
     >
-      <View style={styles.sessionTopBar}>
-        {revealSidebar ? (
+      <View
+        style={[
+          styles.sessionTopBar,
+          isWideLayout && styles.sessionTopBarWide,
+          // iPhone Duo (2026-10-27), by preference: the tab row rises under the icon rows and runs to
+          // the right edge, under the status icons.
+          iconsStacked && {
+            paddingRight: statusBlock.width,
+            height: PORTRAIT_SESSION_BAR_HEIGHT,
+            alignItems: 'flex-start'
+          }
+        ]}
+      >
+        <View style={[styles.sessionIconRow, iconsStacked && portraitLine.button]}>
+          {revealSidebar ? (
+            <MobileSessionHeaderIconButton
+              accessibilityLabel="Show sidebar"
+              icon={PanelLeftOpen}
+              onPress={revealSidebar}
+            />
+          ) : null}
           <MobileSessionHeaderIconButton
-            accessibilityLabel="Show sidebar"
-            icon={PanelLeftOpen}
-            onPress={revealSidebar}
+            accessibilityLabel="Back to worktrees"
+            icon={ChevronLeft}
+            onPress={requestLeaveSession}
           />
-        ) : null}
-        <MobileSessionHeaderIconButton
-          accessibilityLabel="Back to worktrees"
-          icon={ChevronLeft}
-          onPress={requestLeaveSession}
-        />
+        </View>
 
         <View
-          style={[styles.sessionTitleBlock, tabsInTopBar && styles.sessionTitleBlockBesideTabs]}
+          style={[
+            styles.sessionTitleBlock,
+            tabsInTopBar && styles.sessionTitleBlockBesideTabs,
+            iconsStacked && portraitLine.title
+          ]}
         >
           <Text style={styles.sessionTitle} numberOfLines={1}>
             {worktreeName || 'Terminal'}
@@ -82,20 +112,57 @@ export function MobileSessionHeader({ controller }: { controller: MobileSessionC
           </Pressable>
         </View>
         {tabsInTopBar ? tabStrip : null}
-        {/* The side rail hosts these when the window has one (MobileSessionSideRail). */}
-        {sessionSideRail === 'actions' ? null : (
-          <MobileSessionPanelActions
-            isFolderWorkspaceRoute={isFolderWorkspaceRoute}
-            isFloatingWorkspaceRoute={isFloatingWorkspaceRoute}
-            activePanel={activePanel}
-            showHeaderMoreButton={showHeaderMoreButton}
-            handlePanelTap={handlePanelTap}
-            setShowHeaderMoreActions={setShowHeaderMoreActions}
-          />
-        )}
+        {(() => {
+          // The side rail hosts these when the window has one (MobileSessionSideRail).
+          const panelActions =
+            sessionSideRail === 'actions' ? null : (
+              <MobileSessionPanelActions
+                isFolderWorkspaceRoute={isFolderWorkspaceRoute}
+                isFloatingWorkspaceRoute={isFloatingWorkspaceRoute}
+                activePanel={activePanel}
+                showHeaderMoreButton={showHeaderMoreButton}
+                handlePanelTap={handlePanelTap}
+                setShowHeaderMoreActions={setShowHeaderMoreActions}
+              />
+            )
+          if (iconsStacked) {
+            return (
+              <View style={[styles.sessionIconRows, portraitLine.iconRows]}>
+                <View style={[styles.sessionIconRow, portraitLine.iconRow]}>
+                  <MobileSessionViewControls controller={controller} stacked />
+                </View>
+                <View style={[styles.sessionIconRow, portraitLine.iconRow]}>{panelActions}</View>
+              </View>
+            )
+          }
+          return (
+            <>
+              {panelActions}
+              {/* Unfolded only: the folded header has no room beside the status column. */}
+              {isWideLayout ? <MobileSessionViewControls controller={controller} /> : null}
+            </>
+          )
+        })()}
       </View>
 
       {tabsInTopBar ? null : tabStrip}
     </SafeAreaView>
   )
 }
+
+// Offsets from the top bar's 4pt top padding: the icon rows put the lower one on the clock, and the
+// back button and the title block (title over tab count) are centered between the rows. The rows are
+// 30pt apart, under the buttons' 36pt, so the lower row reaches the clock without the top one leaving
+// the screen.
+const BAR_PADDING_TOP = 4
+const ICON_ROW_HEIGHT = 30
+// Title line, 2pt gap, tab count line.
+const TITLE_BLOCK_HEIGHT = 35
+const portraitLine = StyleSheet.create({
+  button: { marginTop: PORTRAIT_NAME_CENTER_Y - 18 - BAR_PADDING_TOP },
+  title: { marginTop: PORTRAIT_NAME_CENTER_Y - TITLE_BLOCK_HEIGHT / 2 - BAR_PADDING_TOP },
+  iconRows: {
+    marginTop: PORTRAIT_CLOCK_CENTER_Y - ICON_ROW_HEIGHT * 1.5 - BAR_PADDING_TOP
+  },
+  iconRow: { height: ICON_ROW_HEIGHT }
+})

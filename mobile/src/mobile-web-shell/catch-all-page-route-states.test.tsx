@@ -27,6 +27,7 @@ const dependencies = vi.hoisted((): Dependencies => {
 })
 
 vi.mock('react-native', () => ({
+  Dimensions: { addEventListener: () => ({ remove: () => {} }) },
   ActivityIndicator: 'ActivityIndicator',
   BackHandler: { addEventListener: () => ({ remove: () => {} }) },
   Keyboard: { addListener: () => ({ remove: () => {} }) },

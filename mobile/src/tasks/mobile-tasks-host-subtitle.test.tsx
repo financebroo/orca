@@ -8,6 +8,10 @@ const reactNative = vi.hoisted(() => ({
   Text: 'Text',
   View: 'View'
 }))
+vi.mock('../layout/side-safe-area', () => ({
+  useStatusColumn: () => null,
+  useStatusColumnPadding: () => 0
+}))
 vi.mock('react-native', () => reactNative)
 vi.mock('./mobile-tasks-dependencies', async () => ({
   ...reactNative,

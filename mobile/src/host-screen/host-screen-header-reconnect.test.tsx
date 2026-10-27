@@ -3,7 +3,20 @@ import { act, create, type ReactTestInstance, type ReactTestRenderer } from 'rea
 import { describe, expect, it, vi } from 'vitest'
 import type { ForceReconnect } from '../transport/rpc-client-context-contract'
 
+// resize-edge pulls in react-native-gesture-handler, which vitest cannot parse.
+vi.mock('../layout/side-safe-area', () => ({
+  ClearStatusColumn: ({ children }: { children: unknown }) => children,
+  useStatusColumn: () => null,
+  useStatusColumnPadding: () => 0,
+  useWindowSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 })
+}))
+vi.mock('../layout/resize-edge', () => ({ ResizeEdge: () => null }))
 vi.mock('react-native', () => ({
+  useWindowDimensions: () => ({ width: 390, height: 844 }),
+  Platform: {
+    OS: 'ios',
+    select: <T,>(options: { ios?: T; default?: T }) => options.ios ?? options.default
+  },
   Pressable: 'Pressable',
   StyleSheet: { create: (styles: unknown) => styles, hairlineWidth: 1 },
   Text: 'Text',

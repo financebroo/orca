@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ChevronLeft, Copy, Check, Send } from 'lucide-react-native'
 import { colors, spacing } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { ConnectionLog } from '../components/ConnectionLog'
 import { connectionDiagnosticsScreenStyles as styles } from './connection-diagnostics-screen-styles'
 import type { ConnectionLogEntry, ConnectionState } from '../transport/types'
@@ -37,9 +38,12 @@ export function ConnectionDiagnosticsView({
   onBack: () => void
 }) {
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back"

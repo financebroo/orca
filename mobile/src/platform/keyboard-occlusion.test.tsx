@@ -22,6 +22,7 @@ const keyboard = vi.hoisted((): KeyboardHarness => ({
 }))
 
 vi.mock('react-native', () => ({
+  Dimensions: { addEventListener: () => ({ remove: () => {} }) },
   Keyboard: {
     metrics: () => keyboard.metrics,
     addListener: (name: string, listener: Listener) => {

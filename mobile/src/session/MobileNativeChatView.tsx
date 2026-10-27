@@ -133,6 +133,8 @@ type Props = ComposerTrayProps & {
   bottomInset?: number
   /** Folded full width: the composer drops into the screen's bottom corners while the keyboard is down. */
   fitScreenCorners?: boolean
+  /** The terminal text-size setting; the transcript starts from it and follows it. */
+  textScale?: number
 }
 
 export function MobileNativeChatView({
@@ -200,7 +202,8 @@ export function MobileNativeChatView({
   onOpenFile,
   keyboardInset = 0,
   bottomInset,
-  fitScreenCorners = false
+  fitScreenCorners = false,
+  textScale = 1
 }: Props): React.JSX.Element {
   const insets = useSafeAreaInsets()
   // Half folded laptop-style, the transcript ends at the hinge and the composer sits below it.
@@ -209,7 +212,7 @@ export function MobileNativeChatView({
   const bottom = bottomInset ?? insets.bottom
   // The keyboard lift is measured from the session's inset, so add it back only while lifted.
   const bottomPad = keyboardInset > 0 ? keyboardInset + bottom : fitScreenCorners ? 0 : bottom
-  const { fontScale, pinchGesture } = useMobileNativeChatPinchGesture()
+  const { fontScale, pinchGesture } = useMobileNativeChatPinchGesture(textScale)
 
   // Memoize list derivation to keep downstream autoscroll/renderItem dependencies stable.
   const { data } = useMemo(

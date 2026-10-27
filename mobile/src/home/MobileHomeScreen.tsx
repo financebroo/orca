@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react'
 import { useFocusEffect } from 'expo-router'
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { SafeAreaView, useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useOpenMobileAccounts } from '../accounts/use-open-mobile-accounts'
 import { getProvenCachedWorktrees } from '../cache/worktree-cache'
 import { ActionSheetModal } from '../components/ActionSheetModal'
@@ -73,8 +73,6 @@ export function MobileHomeScreen() {
     areaWidth
   )
   const [refreshKey, setRefreshKey] = useState(0)
-  const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
-  const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
   const [focused, setFocused] = useState(true)
   // Why: Home stays mounted under pushed screens; they must get the rail back.
   useFocusEffect(
@@ -83,8 +81,9 @@ export function MobileHomeScreen() {
       return () => setFocused(false)
     }, [])
   )
-  // Unfolded Duo on its side: Settings and Refresh move into the side rail under the status items.
   const actionsInRail = useSideRailAvailable() && splitColumns && focused
+  const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
+  const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
   useSideRailContent(
     actionsInRail ? (
       <MobileHomeSideRail onOpenSettings={openSettings} onRefresh={refreshUsage} />
@@ -206,7 +205,10 @@ export function MobileHomeScreen() {
   )
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    // iPhone Duo (2026-10-27): native SafeAreaView read the unfolded portrait status block's real ~82pt
+    // top inset and pushed Home below the clock; the context inset is zeroed there and the top bar
+    // already clears the block on its right.
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <MobileHomeTopBar
         onOpenSettings={actionsInRail ? undefined : openSettings}
         onRefresh={splitColumns && !actionsInRail ? refreshUsage : undefined}
@@ -240,7 +242,7 @@ export function MobileHomeScreen() {
               client={statsClient}
               counters={data.stats}
               activityExtra={accountUsage}
-              // The side rail (unfolded landscape) or the top bar owns refresh in the split.
+              // The rail (landscape) or the top bar (portrait) owns refresh in the split.
               refreshKey={refreshKey}
             />
           </ScrollView>
@@ -286,7 +288,7 @@ export function MobileHomeScreen() {
         onConfirm={() => void handleRemove()}
         onCancel={() => setConfirmRemove(null)}
       />
-    </SafeAreaView>
+    </View>
   )
 }
 

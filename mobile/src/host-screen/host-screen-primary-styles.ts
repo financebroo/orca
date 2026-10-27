@@ -89,14 +89,6 @@ export const hostScreenPrimaryStyles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.sm
   },
-  embeddedFilterChip: {
-    flexShrink: 1,
-    minWidth: 0,
-    height: 30,
-    justifyContent: 'center',
-    paddingHorizontal: spacing.xs,
-    paddingVertical: 0
-  },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',

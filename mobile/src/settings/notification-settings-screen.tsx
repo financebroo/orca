@@ -5,6 +5,7 @@ import { useFocusEffect } from 'expo-router'
 import type { NotificationSettingsOperations } from './notification-settings-operations'
 import { ChevronLeft } from 'lucide-react-native'
 import { colors, spacing, typography } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import type { NotificationPermissionState } from '../notifications/notification-permissions'
 
 const DEFAULT_PERMISSION_STATE: NotificationPermissionState = {
@@ -26,6 +27,7 @@ export default function NotificationsScreen({
   children?: (enabled: boolean) => ReactNode
 }) {
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
   const [saving, setSaving] = useState(false)
   const savingRef = useRef(false)
   const requestRevision = useRef(0)
@@ -109,7 +111,9 @@ export default function NotificationsScreen({
         paddingBottom: insets.bottom + spacing.xl
       }}
     >
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Back"

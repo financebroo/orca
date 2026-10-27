@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
   Plus,
   Search,
+  Settings,
   SquareTerminal,
   UserCircle,
   X
@@ -17,7 +18,12 @@ import {
 import { StatusDot } from '../components/StatusDot'
 import { classifyConnection, type ConnectionVerdict } from '../transport/connection-health'
 import { useCalmConnectionState } from '../transport/calm-connection-state'
-import { colors } from '../theme/mobile-theme'
+import { colors, spacing } from '../theme/mobile-theme'
+import {
+  PORTRAIT_NAME_CENTER_Y,
+  usePortraitSessionChromeHeight
+} from '../layout/portrait-header-line'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { hostScreenStyles as styles } from './host-screen-styles'
 import type { HostScreenController } from './use-host-screen-controller'
 
@@ -43,10 +49,34 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
   } = controller
   // Why: a drop healed in a few seconds must not flash the host dot amber.
   const presentedConnState = useCalmConnectionState(connState, lastConnectedAt)
+  // Folded Duo: these rows sit beside the status column; the list below runs full width.
+  const statusColumnPadding = useStatusColumnPadding()
+  const sessionChromeHeight = usePortraitSessionChromeHeight()
 
   return (
-    <View style={styles.topChrome}>
-      <View style={styles.statusBar}>
+    <View
+      style={[
+        styles.topChrome,
+        // The icon row drops so its bottom line meets the session header's (unfolded portrait).
+        embedded &&
+          sessionChromeHeight !== null && {
+            minHeight: sessionChromeHeight,
+            justifyContent: 'space-between'
+          }
+      ]}
+    >
+      <View
+        style={[
+          styles.statusBar,
+          statusColumnPadding > 0 && { paddingRight: statusColumnPadding + spacing.xs },
+          // Unfolded portrait: the host block is centered on the session title block's line. Its
+          // center is 21pt down in the plain bar (4pt padding, 34pt row), so the difference is added.
+          embedded &&
+            sessionChromeHeight !== null && {
+              paddingTop: spacing.xs + PORTRAIT_NAME_CENTER_Y - 21
+            }
+        ]}
+      >
         <Pressable
           style={styles.backButton}
           onPress={actions.leaveHost}
@@ -145,30 +175,8 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
 
       {embedded ? (
         <View style={styles.embeddedToolbar}>
-          <View style={styles.embeddedToolbarRow}>
-            <Pressable
-              style={[
-                styles.filterChip,
-                styles.embeddedFilterChip,
-                controller.activeFilterCount > 0 && styles.filterChipActive
-              ]}
-              onPress={() => state.setShowWorkspaceOptions(true)}
-              accessibilityRole="button"
-              accessibilityLabel={workspaceOptionsAccessibilityLabel(controller.activeFilterCount)}
-            >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  controller.activeFilterCount > 0 && styles.filterChipTextActive
-                ]}
-                numberOfLines={1}
-              >
-                {WORKSPACE_OPTIONS_TITLE}
-              </Text>
-              <WorkspaceOptionsCountBadge count={controller.activeFilterCount} />
-            </Pressable>
-          </View>
-
+          {/* iPhone Duo (2026-10-27): the Workspace options pill took a whole row of the sidebar; it is
+              the gear at the end of the icon row now (owner's call). */}
           <View style={styles.embeddedToolbarRow}>
             <Pressable
               style={[
@@ -250,10 +258,27 @@ export function HostScreenHeader({ controller }: { controller: HostScreenControl
                 <Search size={16} color={colors.textSecondary} />
               )}
             </Pressable>
+
+            <Pressable
+              style={styles.embeddedToolbarIconButton}
+              onPress={() => state.setShowWorkspaceOptions(true)}
+              accessibilityRole="button"
+              accessibilityLabel={workspaceOptionsAccessibilityLabel(controller.activeFilterCount)}
+            >
+              <Settings
+                size={16}
+                color={controller.activeFilterCount > 0 ? colors.accentBlue : colors.textSecondary}
+              />
+            </Pressable>
           </View>
         </View>
       ) : (
-        <View style={styles.toolbar}>
+        <View
+          style={[
+            styles.toolbar,
+            statusColumnPadding > 0 && { paddingRight: statusColumnPadding + spacing.xs }
+          ]}
+        >
           <Pressable
             style={[styles.filterChip, controller.activeFilterCount > 0 && styles.filterChipActive]}
             onPress={() => state.setShowWorkspaceOptions(true)}

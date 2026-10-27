@@ -10,7 +10,7 @@ import {
   useReconnectAttempt
 } from '../transport/client-context-connection-metrics'
 import { useResponsiveLayout } from '../layout/responsive-layout'
-import { useFoldDivision, useSideRailTop } from '../layout/use-window-regions'
+import { useSideRailTop } from '../layout/use-window-regions'
 import { hostOs } from '../platform/host-os'
 import { resolveSessionSafeAreaInsets } from './session-safe-area-insets'
 import { useSideRailAvailable } from '../layout/side-rail'
@@ -42,9 +42,8 @@ export function useMobileSessionFoundation() {
   const isFolderWorkspaceRoute = worktreeId.startsWith('folder:')
   const isFloatingWorkspaceRoute = isFloatingWorkspaceWorktreeId(worktreeId)
   const router = useRouteHandoff()
-  const { isWideLayout, isLandscape, isTabletLayout } = useResponsiveLayout()
+  const { isWideLayout, isLandscape } = useResponsiveLayout()
   const sideRailAvailable = useSideRailAvailable()
-  const foldDivision = useFoldDivision()
   const windowInsets = useSafeAreaInsets()
   const { client, clientId, state: connState } = useWorkspaceClient(hostId)
   const { hostCapabilities } = useHostProtocolGates()
@@ -100,12 +99,10 @@ export function useMobileSessionFoundation() {
       return () => setIsScreenFocused(false)
     }, [])
   )
-  // Unfolded, the rail hosts the session's actions; folded, a column is too much of a 466pt screen,
-  // so the session runs full width and only its header rows stay clear of the status column.
-  // A hinge only exists unfolded: a page in a half-folded detail pane is phone-sized on the big screen.
-  const onInnerScreen = isTabletLayout || foldDivision !== null
+  // iPhone Duo (2026-10-27): unfolded too, by choice: keys back under the terminal, the terminal full
+  // width, and the panel actions in the header's top right beside the status column, as folded.
   const sessionSideRail: MobileSessionSideRailMode =
-    !sideRailAvailable || !isScreenFocused ? null : onInnerScreen ? 'actions' : 'fullWidth'
+    !sideRailAvailable || !isScreenFocused ? null : ('fullWidth' as MobileSessionSideRailMode)
   const statusColumnWidth = useWindowSafeAreaInsets().right
   const foldedFullWidth = sessionSideRail === 'fullWidth'
   const insets = useMemo(
@@ -119,8 +116,8 @@ export function useMobileSessionFoundation() {
   )
   // Folded, the terminal's keys move into the strip under the status column when its top is known.
   const statusColumnTop = useSideRailTop()
-  const terminalKeysBesideTerminal =
-    sessionSideRail === 'actions' || (sessionSideRail === 'fullWidth' && statusColumnTop !== null)
+  // folded, the grid runs full width, so the keys stay in the row under it.
+  const terminalKeysBesideTerminal = sessionSideRail === 'actions'
   const initialCreateWarning = typeof createdWarning === 'string' ? createdWarning.trim() : ''
   return {
     hostId,

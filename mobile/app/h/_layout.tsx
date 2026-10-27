@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { View, StyleSheet, PanResponder, Platform } from 'react-native'
+import { View, StyleSheet, Platform, Pressable } from 'react-native'
+import { PanelLeftOpen } from 'lucide-react-native'
 import { useGlobalSearchParams, useNavigation, usePathname } from 'expo-router'
 import { useSafeAreaFrame } from 'react-native-safe-area-context'
 import { colors } from '../../src/theme/mobile-theme'
@@ -20,7 +21,8 @@ import { usePageOwnsHostArea } from '../../src/mobile-web-shell/page-owns-host-a
 import { isOverlayPageRoute } from '../../src/new-workspace/overlay-page-route'
 import { foldPosture, type FoldPosture } from '../../src/layout/fold-division'
 import { useFoldDivision } from '../../src/layout/use-window-regions'
-import { useWindowSafeAreaInsets } from '../../src/layout/side-safe-area'
+import { ClearStatusColumn, useWindowSafeAreaInsets } from '../../src/layout/side-safe-area'
+import { ResizeEdge } from '../../src/layout/resize-edge'
 
 // Keep at least this much room for the detail pane when resizing the sidebar.
 const MIN_DETAIL_WIDTH = 320
@@ -72,6 +74,7 @@ export default function HostGroupLayout() {
   const dragStartRef = useRef(sidebarWidth)
   const shownWidthRef = useRef(sidebarWidth)
   const overrideHingeRef = useRef<() => void>(() => {})
+  const hingeWidthRef = useRef(0)
 
   useEffect(() => {
     let stale = false
@@ -110,31 +113,26 @@ export default function HostGroupLayout() {
     }
   }, [detailHasContent, showSidebar])
 
-  // Use an overlaid leaf drag handle: Android ScrollView/FlatList captures touches before a parent PanResponder.
-  // Claim start/capture because nothing lies beneath the handle; keep it off the sidebar container.
-  const resizer = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        // A drag takes over from a hinge snap, starting from the width on screen.
-        dragStartRef.current = shownWidthRef.current
-        overrideHingeRef.current()
-      },
-      onPanResponderMove: (_evt, g) => {
-        setSidebarWidth(clampSidebarToWindow(dragStartRef.current + g.dx, areaWidthRef.current))
-      },
-      onPanResponderRelease: () => {
-        void saveHostSidebarWidth(widthRef.current)
-      },
-      onPanResponderTerminate: () => {
-        void saveHostSidebarWidth(widthRef.current)
-      }
-    })
-  ).current
+  // Use an overlaid leaf drag handle: Android ScrollView/FlatList captures touches before a parent responder.
+  const startResize = () => {
+    // A drag takes over from a hinge snap, starting from the width on screen.
+    dragStartRef.current = shownWidthRef.current
+    overrideHingeRef.current()
+  }
+  const dragResize = (translationX: number) => {
+    // the hinge-snapped width may exceed the window clamp; it stays the drag's maximum.
+    const max = Math.max(
+      clampSidebarToWindow(HOST_SIDEBAR_MAX_WIDTH, areaWidthRef.current),
+      hingeWidthRef.current
+    )
+    setSidebarWidth(
+      Math.min(
+        max,
+        Math.max(HOST_SIDEBAR_MIN_WIDTH, Math.round(dragStartRef.current + translationX))
+      )
+    )
+  }
+  const endResize = () => void saveHostSidebarWidth(widthRef.current)
 
   // Half folded book-style, the panes meet at the hinge until the user drags the edge.
   const hingeSplit = resolveHingeSplit(foldPosture(useFoldDivision()), windowInsets.left, areaWidth)
@@ -145,12 +143,17 @@ export default function HostGroupLayout() {
   const snappedToHinge = hingeSplit !== null && !hingeOverridden
   const shownSidebarWidth = snappedToHinge ? hingeSplit.sidebarWidth : sidebarWidth
   shownWidthRef.current = shownSidebarWidth
+  hingeWidthRef.current = hingeSplit?.sidebarWidth ?? 0
 
   // Why: on iOS 26 a rightward drag anywhere can pop the root stack, so resizing the sidebar went back to Home.
   const navigation = useNavigation()
+  // iPhone Duo (2026-10-27): unfolded, the served page draws the sidebar and session itself, so
+  // sidebarShown is false here and swipe-back stayed on: dragging the page's sidebar or dock edge slid
+  // the whole screen back toward Home. The page's split needs the same protection as the native one.
+  const pageSplit = isWideLayout && hostAreaServing
   useEffect(() => {
-    navigation.setOptions({ gestureEnabled: !sidebarShown })
-  }, [navigation, sidebarShown])
+    navigation.setOptions({ gestureEnabled: !sidebarShown && !pageSplit })
+  }, [navigation, sidebarShown, pageSplit])
 
   // Keep detail Stack at a stable tree position so fold/rotation cannot remount navigation.
   return (
@@ -158,13 +161,37 @@ export default function HostGroupLayout() {
       <View style={[styles.row, overlayRoute && styles.transparent]}>
         {showSidebar && sidebarOpen ? (
           <View style={[styles.sidebar, { width: shownSidebarWidth }]}>
-            <HostScreen
-              embedded
-              hostId={hostId}
-              onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
-            />
+            {/* The status block sits over the detail pane's corner, never the sidebar's. */}
+            <ClearStatusColumn>
+              <HostScreen
+                embedded
+                hostId={hostId}
+                onHideSidebar={canCollapseSidebar ? hideSidebar : undefined}
+              />
+            </ClearStatusColumn>
             {/* Edge drag handle captures Android gestures above the list. */}
-            <View style={styles.resizeHandle} {...resizer.panHandlers} />
+            <ResizeEdge
+              style={styles.resizeHandle}
+              border="right"
+              onStart={startResize}
+              onDrag={dragResize}
+              onEnd={endResize}
+            />
+          </View>
+        ) : null}
+        {/* iPhone Duo (2026-10-27): natively the detail is a shell WebView whose header cannot read this
+            layout's reveal context, so after Hide nothing could bring the sidebar back (owner, landscape). */}
+        {Platform.OS !== 'web' && showSidebar && !sidebarOpen ? (
+          <View style={[styles.revealStrip, { paddingTop: windowInsets.top + 4 }]}>
+            <Pressable
+              style={styles.revealButton}
+              onPress={revealSidebar}
+              accessibilityRole="button"
+              accessibilityLabel="Show sidebar"
+              hitSlop={8}
+            >
+              <PanelLeftOpen size={18} color={colors.textSecondary} />
+            </Pressable>
           </View>
         ) : null}
         <View
@@ -180,7 +207,7 @@ export default function HostGroupLayout() {
               {/* Why: the detail pane's swipe-back edge is the sidebar resize handle; a drag there popped the screen. */}
               <HostStack
                 animation={showSidebar ? 'none' : 'default'}
-                gestureEnabled={!sidebarShown}
+                gestureEnabled={!sidebarShown && !pageSplit}
               />
             </HostSidebarRevealContext.Provider>
           </HostAreaServingContext.Provider>
@@ -216,5 +243,18 @@ const styles = StyleSheet.create({
   detail: {
     flex: 1,
     minWidth: 0
+  },
+  revealStrip: {
+    width: 44,
+    alignItems: 'center',
+    backgroundColor: colors.bgPanel,
+    borderRightWidth: 1,
+    borderRightColor: colors.borderSubtle
+  },
+  revealButton: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center'
   }
 })

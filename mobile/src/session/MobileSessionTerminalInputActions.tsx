@@ -4,9 +4,12 @@ import type { MobileSessionController } from './use-mobile-session-controller'
 
 // The session's photo + mic actions, wired once for both input bars.
 export function MobileSessionTerminalInputActions({
-  controller
+  controller,
+  inKeyRow = false
 }: {
   controller: MobileSessionController
+  // drawn as keys in the accessory row instead of round buttons in the input bar.
+  inKeyRow?: boolean
 }) {
   const {
     canSend,
@@ -27,7 +30,7 @@ export function MobileSessionTerminalInputActions({
       dictation={dictation}
       dictationMode={dictationMode}
       dictationEnabled={dictationEnabled}
-      buttonStyle={styles.dictationButton}
+      buttonStyle={inKeyRow ? styles.keyRowActionKey : styles.dictationButton}
       activeButtonStyle={styles.dictationButtonActive}
       disabledButtonStyle={styles.sendButtonDisabled}
       onAttachImage={() => void attachImage('library')}

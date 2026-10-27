@@ -1,32 +1,33 @@
 import { Pressable, StyleSheet, Text } from 'react-native'
-import { ChevronsRight, Monitor, Plus, Smartphone } from 'lucide-react-native'
+import { Monitor, Plus, Smartphone } from 'lucide-react-native'
 import { triggerMediumImpact } from '../platform/haptics'
 import { createTerminalLiveAccessoryInput } from '../terminal/terminal-live-accessory-input'
 import { keepHeldPressThroughLongPress } from './held-press-long-press'
 import { isTerminalPhoneDisplayMode } from './mobile-session-route-helpers'
 import { colors, spacing } from '../theme/mobile-theme'
 import { styles } from './mobile-session-styles'
+import { useResponsiveLayout } from '../layout/responsive-layout'
 import type { MobileSessionController } from './use-mobile-session-controller'
 
 // The terminal's shortcut keys, shared by the accessory row under the terminal and the side rail.
 export function MobileSessionAccessoryKeys({
   controller,
-  inRail = false
+  inRail = false,
+  tall = false
 }: {
   controller: MobileSessionController
   inRail?: boolean
+  // keyboard down, the row grows so swipes on it are not taken by the iOS home gesture.
+  tall?: boolean
 }) {
   const {
     canSend,
-    canCompose,
     canPaste,
     activeHandle,
     terminalModes,
-    liveInputEnabled,
     visibleBuiltInAccessoryKeys,
     customKeys,
     toggleDisplayMode,
-    toggleLiveInput,
     handlePaste,
     handleAccessoryKey,
     startAccessoryRepeat,
@@ -34,54 +35,42 @@ export function MobileSessionAccessoryKeys({
     setDeleteKeyTarget,
     setShowCustomKeyModal
   } = controller
-  const keyStyle = inRail ? [styles.accessoryKey, railStyles.key] : styles.accessoryKey
+  // iPhone Duo (2026-10-27): unfolded, the header has the phone/desktop switch (MobileSessionViewControls).
+  const displayModeInHeader = useResponsiveLayout().isWideLayout && !inRail
+  const keyStyle = inRail
+    ? [styles.accessoryKey, railStyles.key]
+    : tall
+      ? [styles.accessoryKey, styles.accessoryKeyTall]
+      : styles.accessoryKey
   return (
     <>
-      <Pressable
-        style={({ pressed }) => [
-          keyStyle,
-          pressed && styles.accessoryKeyPressed,
-          !canSend && styles.accessoryKeyDisabled
-        ]}
-        disabled={!canSend}
-        onPress={() => {
-          if (activeHandle) {
-            void toggleDisplayMode(activeHandle)
+      {displayModeInHeader ? null : (
+        <Pressable
+          style={({ pressed }) => [
+            keyStyle,
+            pressed && styles.accessoryKeyPressed,
+            !canSend && styles.accessoryKeyDisabled
+          ]}
+          disabled={!canSend}
+          onPress={() => {
+            if (activeHandle) {
+              void toggleDisplayMode(activeHandle)
+            }
+          }}
+          accessibilityLabel={
+            isTerminalPhoneDisplayMode(activeHandle, terminalModes)
+              ? 'Switch to desktop mode'
+              : 'Switch to phone mode'
           }
-        }}
-        accessibilityLabel={
-          isTerminalPhoneDisplayMode(activeHandle, terminalModes)
-            ? 'Switch to desktop mode'
-            : 'Switch to phone mode'
-        }
-      >
-        {isTerminalPhoneDisplayMode(activeHandle, terminalModes) ? (
-          <Monitor size={14} color={canSend ? colors.textSecondary : colors.textMuted} />
-        ) : (
-          <Smartphone size={14} color={canSend ? colors.textSecondary : colors.textMuted} />
-        )}
-      </Pressable>
-      <Pressable
-        style={({ pressed }) => [
-          keyStyle,
-          liveInputEnabled && styles.accessoryKeyActive,
-          pressed && styles.accessoryKeyPressed,
-          !canCompose && styles.accessoryKeyDisabled
-        ]}
-        // Why: offline, live mode is dead but the buffered box still composes — keep the escape hatch tappable (#6713).
-        disabled={!canCompose}
-        onPress={toggleLiveInput}
-        accessibilityLabel={
-          liveInputEnabled ? 'Switch to buffered command input' : 'Switch to live terminal input'
-        }
-      >
-        <ChevronsRight
-          size={14}
-          color={
-            liveInputEnabled ? colors.bgBase : canCompose ? colors.textSecondary : colors.textMuted
-          }
-        />
-      </Pressable>
+        >
+          {isTerminalPhoneDisplayMode(activeHandle, terminalModes) ? (
+            <Monitor size={14} color={canSend ? colors.textSecondary : colors.textMuted} />
+          ) : (
+            <Smartphone size={14} color={canSend ? colors.textSecondary : colors.textMuted} />
+          )}
+        </Pressable>
+      )}
+      {/* iPhone Duo (2026-10-26): live input is always on, so the buffered-input toggle is gone. */}
       {canPaste && (
         <Pressable
           style={({ pressed }) => [

@@ -158,7 +158,9 @@ export async function saveDisabledTerminalLiveInputHandles(
 const SIDEBAR_WIDTH_KEY = 'orca:hostSidebarWidth'
 
 // Caller also caps this tablet/foldable sidebar against the window to preserve detail space.
-export const HOST_SIDEBAR_MIN_WIDTH = 280
+// iPhone Duo (2026-10-27): 280 pinned the unfolded Duo's sidebar: the 669pt inner screen minus the
+// status column and the 320pt detail minimum left ~290, so the edge drag had nowhere to go.
+export const HOST_SIDEBAR_MIN_WIDTH = 180
 export const HOST_SIDEBAR_MAX_WIDTH = 560
 export const HOST_SIDEBAR_DEFAULT_WIDTH = 340
 
@@ -189,7 +191,8 @@ export async function saveHostSidebarWidth(width: number): Promise<void> {
 const DOCK_WIDTH_KEY = 'orca:hostDockWidth'
 
 // Match left sidebar bounds; caller caps the dock against window width to preserve terminal space.
-export const HOST_DOCK_MIN_WIDTH = 280
+// iPhone Duo (2026-10-27): same reason as HOST_SIDEBAR_MIN_WIDTH; the dock now shrinks like the sidebar.
+export const HOST_DOCK_MIN_WIDTH = 180
 export const HOST_DOCK_MAX_WIDTH = 560
 export const HOST_DOCK_DEFAULT_WIDTH = 340
 

@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { PanResponder } from 'react-native'
 import {
   HOST_DOCK_DEFAULT_WIDTH,
   HOST_DOCK_MAX_WIDTH,
@@ -12,7 +11,9 @@ import { SESSION_DOCK_MIN_MAIN_WIDTH } from './session-panel-host'
 
 type MobileDockResize = {
   dockWidth: number
-  panHandlers: ReturnType<typeof PanResponder.create>['panHandlers']
+  startResize: () => void
+  dragResize: (translationX: number) => void
+  endResize: () => void
 }
 
 function clampDockWidthForRow(width: number, availableWidth: number): number {
@@ -23,7 +24,7 @@ function clampDockWidthForRow(width: number, availableWidth: number): number {
   return Math.min(Math.min(HOST_DOCK_MAX_WIDTH, maxForRow), clampHostDockWidth(width))
 }
 
-// Attach PanResponder to a leaf edge overlay: Android child scroll views consume container move events. Dragging left widens the right dock.
+// Drive a leaf edge overlay (ResizeEdge): Android child scroll views consume container move events. Dragging left widens the right dock.
 export function useMobileDockResize(availableWidth = 0): MobileDockResize {
   const [dockWidth, setDockWidth] = useState(HOST_DOCK_DEFAULT_WIDTH)
 
@@ -49,27 +50,15 @@ export function useMobileDockResize(availableWidth = 0): MobileDockResize {
     setDockWidth((prev) => clampDockWidthForRow(prev, availableWidth))
   }, [availableWidth])
 
-  const resizer = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => false,
-      onPanResponderGrant: () => {
-        dragStartRef.current = widthRef.current
-      },
-      onPanResponderMove: (_evt, g) => {
-        setDockWidth(clampDockWidthForRow(dragStartRef.current - g.dx, availableWidthRef.current))
-      },
-      onPanResponderRelease: () => {
-        void saveHostDockWidth(widthRef.current)
-      },
-      onPanResponderTerminate: () => {
-        void saveHostDockWidth(widthRef.current)
-      }
-    })
-  ).current
+  const startResize = () => {
+    dragStartRef.current = widthRef.current
+  }
+  const dragResize = (translationX: number) => {
+    setDockWidth(
+      clampDockWidthForRow(dragStartRef.current - translationX, availableWidthRef.current)
+    )
+  }
+  const endResize = () => void saveHostDockWidth(widthRef.current)
 
-  return { dockWidth, panHandlers: resizer.panHandlers }
+  return { dockWidth, startResize, dragResize, endResize }
 }

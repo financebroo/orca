@@ -6,6 +6,7 @@ const withTimingCalls = vi.hoisted(() => [] as { to: number; duration: number | 
 const sharedWrites = vi.hoisted(() => [] as { key: string; value: unknown }[])
 
 vi.mock('react-native', () => ({
+  Dimensions: { addEventListener: () => ({ remove: () => {} }) },
   BackHandler: { addEventListener: () => ({ remove: () => {} }) },
   Keyboard: {
     addListener: () => ({ remove: () => {} }),

@@ -7,6 +7,7 @@ import { SCREEN_SNAPSHOT, type ScreenDependencies } from './mobile-web-shell-scr
 export function screenModuleMocks(dependencies: ScreenDependencies) {
   return {
     'react-native': () => ({
+      Dimensions: { addEventListener: () => ({ remove: () => {} }) },
       ActivityIndicator: 'ActivityIndicator',
       AccessibilityInfo: {
         isReduceMotionEnabled: () => Promise.resolve(false),

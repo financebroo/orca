@@ -7,6 +7,7 @@ type Props = {
   onAfterClose?: () => void
   children: ReactNode
   dragContentToDismiss?: boolean
+  header?: ReactNode
   contentScrollable?: boolean
   // Stable outer frame keeps docked input above keyboard while results reflow; content-sized sheets move it on every list change.
   fillAvailable?: boolean

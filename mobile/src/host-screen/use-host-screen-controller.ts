@@ -8,6 +8,7 @@ import { useActiveWorktreeScroll } from '../hooks/use-active-worktree-scroll'
 import { useNow } from '../hooks/use-now'
 import { useResponsiveLayout } from '../layout/responsive-layout'
 import { useSideRailAvailable } from '../layout/side-rail'
+import { useStatusColumn } from '../layout/side-safe-area'
 import {
   useForgetHostClient,
   useForceReconnect,
@@ -143,6 +144,8 @@ export function useHostScreenController({
   const existingWorktreePaths = useMemo(() => state.worktrees.map((w) => w.path), [state.worktrees])
   const activeWorktreeScroll = useActiveWorktreeScroll(sectionsResult.sections, collapsedGroups)
   const sideRailAvailable = useSideRailAvailable()
+  // Folded, the header keeps its actions and the list runs full width (2026-10-26).
+  const folded = useStatusColumn() !== null
   const [focused, setFocused] = useState(true)
   // Why: the list left mounted under a pushed session must give the rail to the session.
   useFocusEffect(
@@ -152,7 +155,7 @@ export function useHostScreenController({
     }, [])
   )
   // A sidebar is never at the window's right edge; the full-screen list is.
-  const actionsInRail = sideRailAvailable && !embedded && focused
+  const actionsInRail = sideRailAvailable && !folded && !embedded && focused
 
   return {
     actions,

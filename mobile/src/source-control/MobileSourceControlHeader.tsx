@@ -1,6 +1,7 @@
 import { Pressable, Text, View } from 'react-native'
 import { ChevronLeft, ExternalLink, RefreshCw, X } from 'lucide-react-native'
 import { colors } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { styles } from './mobile-source-control-styles'
 
 type Props = {
@@ -26,8 +27,9 @@ export function MobileSourceControlHeader({
   onOpenPrWeb,
   prNumber = null
 }: Props) {
+  const statusColumnPadding = useStatusColumnPadding()
   return (
-    <View style={styles.topBar}>
+    <View style={[styles.topBar, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}>
       {/* Dock dismissal and route Back have distinct semantics. */}
       {embedded ? (
         <Pressable

@@ -5,6 +5,7 @@ import { ChevronLeft, Save } from 'lucide-react-native'
 import { useWorkspaceRouteHandoff } from '../navigation/workspace-route-handoff'
 import { getWorktreeLabel } from '../session/worktree-label'
 import { colors, spacing } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { useForceReconnect } from '../transport/host-client-hooks'
 import { useWorkspaceClient } from '../transport/use-workspace-client'
 import { connectionRetryAction } from '../transport/connection-retry-action'
@@ -37,6 +38,7 @@ type Props = {
 }
 
 export function MobileFilePreviewScreen({ route }: Props) {
+  const statusColumnPadding = useStatusColumnPadding()
   // Use the shared route handoff to keep this screen within the bundle asset budget.
   const router = useWorkspaceRouteHandoff()
   const previewParams = route.ok ? route.params : null
@@ -232,7 +234,9 @@ export function MobileFilePreviewScreen({ route }: Props) {
   return (
     <View style={styles.container}>
       <SafeAreaView style={styles.header} edges={['top']}>
-        <View style={styles.topBar}>
+        <View
+          style={[styles.topBar, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+        >
           <Pressable
             style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}
             onPress={requestBack}

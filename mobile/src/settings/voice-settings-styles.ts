@@ -10,7 +10,6 @@ export const voiceSettingsStyles = StyleSheet.create({
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.sm,
     marginBottom: spacing.lg
   },
   backButton: {

@@ -26,6 +26,7 @@ const { agentSpinnerRender, agentStateDotRender, metaGlyphsRender } = vi.hoisted
   metaGlyphsRender: vi.fn()
 }))
 
+vi.mock('../layout/side-safe-area', () => ({ useStatusColumnPadding: () => 0 }))
 vi.mock('react-native', () => ({
   Pressable: 'Pressable',
   StyleSheet: { create: <T>(styles: T) => styles },

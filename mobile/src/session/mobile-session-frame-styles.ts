@@ -117,16 +117,18 @@ export const mobileSessionFrameStyles = StyleSheet.create({
     borderLeftWidth: 1,
     borderLeftColor: colors.borderSubtle
   },
+  // iPhone Duo (2026-10-27): tabs 36pt with 12pt labels (were 44/13), and no 8pt lead-in before the
+  // first tab, which read as a stray gap beside the sidebar (owner's call).
   tabScroll: {
     flex: 1,
-    maxHeight: 44
+    maxHeight: 36
   },
   tabScrollInTopBar: {
     alignSelf: 'stretch',
-    maxHeight: 44
+    maxHeight: 36
   },
   tabContent: {
-    paddingLeft: spacing.sm,
+    paddingLeft: 0,
     paddingRight: spacing.sm
   },
   tabContentInTopBar: {
@@ -135,11 +137,11 @@ export const mobileSessionFrameStyles = StyleSheet.create({
   tab: {
     minWidth: 44,
     maxWidth: 128,
-    minHeight: 44,
+    minHeight: 36,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.sm,
+    paddingVertical: spacing.xs,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
     borderRightWidth: 1,
@@ -166,7 +168,7 @@ export const mobileSessionFrameStyles = StyleSheet.create({
   tabText: {
     flexShrink: 1,
     color: colors.textSecondary,
-    fontSize: 13
+    fontSize: 12
   },
   tabTextActive: {
     color: colors.textPrimary
@@ -176,8 +178,25 @@ export const mobileSessionFrameStyles = StyleSheet.create({
   },
   tabActionDivider: {
     width: StyleSheet.hairlineWidth,
+    // Takes no room, so the buttons beside it line up with the header's.
+    marginRight: -StyleSheet.hairlineWidth,
     height: 18,
     backgroundColor: colors.borderSubtle
+  },
+  // iPhone Duo (2026-10-27), unfolded: header and tab-row icons end on one line, 4pt from the edge.
+  sessionTopBarWide: {
+    paddingRight: spacing.xs
+  },
+  tabBarWide: {
+    paddingRight: spacing.xs
+  },
+  // Unfolded portrait: the header's two icon rows, right-aligned so their columns line up.
+  sessionIconRows: {
+    alignItems: 'flex-end'
+  },
+  sessionIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center'
   },
   contentFrame: {
     flex: 1,

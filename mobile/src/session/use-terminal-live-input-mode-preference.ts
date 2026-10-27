@@ -120,6 +120,10 @@ export function useTerminalLiveInputModePreference({
   const toggleTerminalLiveInput = useCallback(
     (handle: string): boolean => {
       const nextEnabled = !liveInputTerminalHandlesRef.current.has(handle)
+      // iPhone Duo (2026-10-26): typing always goes to the terminal; the buffered command box is retired.
+      if (!nextEnabled) {
+        return true
+      }
       if (nextEnabled) {
         disabledLiveInputTerminalHandlesRef.current.delete(handle)
       } else {
@@ -164,7 +168,8 @@ export function useTerminalLiveInputModePreference({
         return
       }
       const pendingEdits = pendingDisabledLiveInputHydrationEditsRef.current
-      const hydratedDisabledHandles = new Set(preference.handles)
+      // saved opt-outs from the buffered command box are ignored; live input is always on.
+      const hydratedDisabledHandles = new Set<string>()
       for (const [handle, disabled] of pendingEdits) {
         if (disabled) {
           hydratedDisabledHandles.add(handle)

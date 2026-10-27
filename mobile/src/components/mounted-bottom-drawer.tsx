@@ -24,7 +24,7 @@ import {
   useBottomDrawerModalHostBackClaim
 } from './bottom-drawer-modal-host-scope'
 import { useResponsiveLayout } from '../layout/responsive-layout'
-import { useWindowSafeAreaInsets } from '../layout/side-safe-area'
+import { useStatusColumn, useWindowSafeAreaInsets } from '../layout/side-safe-area'
 import { useBackClaim } from '../navigation/use-back-claim'
 import { currentSoftKeyboardHeight, subscribeSoftKeyboard } from '../platform/keyboard-occlusion'
 import { hostOs } from '../platform/host-os'
@@ -41,6 +41,8 @@ export type MountedBottomDrawerProps = {
   onHidden: () => void
   children: ReactNode
   dragContentToDismiss?: boolean
+  // drawn with the handle, outside the scroll view; dragging it moves the sheet.
+  header?: ReactNode
   contentScrollable?: boolean
   fillAvailable?: boolean
   // Pinned-under sheet preserves size but must not receive touches, backdrop or keyboard lift.
@@ -56,6 +58,7 @@ export function MountedBottomDrawer({
   onHidden,
   children,
   dragContentToDismiss = true,
+  header,
   contentScrollable = true,
   fillAvailable = false,
   interactive = true,
@@ -79,13 +82,22 @@ export function MountedBottomDrawer({
   const [keyboardInset, setKeyboardInset] = useState(0)
   const { height: screenHeight } = useWindowDimensions()
   const insets = useWindowSafeAreaInsets()
+  // Folded Duo: the status column only occludes the top right, so the sheet runs full width.
+  const statusColumn = useStatusColumn()
+  const sideInsetRight = statusColumn !== null ? 0 : insets.right
+  // iPhone Duo (2026-10-27): folded, the top inset is ~0 but the status column runs down the top right,
+  // so a tall sheet (Voice > Speech Model) put its Download buttons under the clock. Cap the sheet below it.
+  const sheetTopInset = Math.max(insets.top, statusColumn?.bottom ?? 0)
+  // iPhone Duo (2026-10-26): a scrolling sheet scrolls its rows down to the screen edge; padding the
+  // sheet itself left an opaque home-indicator band that cut rows off above the bottom.
+  const scrollBottomPadding = { paddingBottom: insets.bottom + spacing.lg }
   // Cap/center tablet width while retaining phone’s bottom anchor and drag/keyboard transforms.
   const { isWideLayout, modalMaxWidth } = useResponsiveLayout()
   const insideModalHost = useBottomDrawerModalHost() !== null
   const fillHeight = fillAvailable
     ? resolveBottomDrawerFillHeight({
         screenHeight,
-        topInset: insets.top,
+        topInset: sheetTopInset,
         keyboardInset,
         topGap: spacing.lg
       })
@@ -296,11 +308,13 @@ export function MountedBottomDrawer({
   const handle = (
     <GestureDetector gesture={handlePanGesture}>
       <Animated.View
-        style={styles.handleHitArea}
-        accessibilityRole="button"
-        accessibilityLabel="Dismiss drawer"
+        accessibilityRole={header ? undefined : 'button'}
+        accessibilityLabel={header ? undefined : 'Dismiss drawer'}
       >
-        <View style={styles.handle} />
+        <View style={styles.handleHitArea}>
+          <View style={styles.handle} />
+        </View>
+        {header}
       </Animated.View>
     </GestureDetector>
   )
@@ -325,6 +339,7 @@ export function MountedBottomDrawer({
               onScroll={scrollHandler}
               scrollEventThrottle={16}
               showsVerticalScrollIndicator={false}
+              contentContainerStyle={scrollBottomPadding}
             >
               {children}
             </Animated.ScrollView>
@@ -340,6 +355,7 @@ export function MountedBottomDrawer({
         bounces={false}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={scrollBottomPadding}
       >
         {children}
       </ScrollView>
@@ -365,7 +381,7 @@ export function MountedBottomDrawer({
           style={[
             styles.anchor,
             isWideLayout && styles.anchorWide,
-            { paddingLeft: insets.left, paddingRight: insets.right }
+            { paddingLeft: insets.left, paddingRight: sideInsetRight }
           ]}
           pointerEvents="box-none"
         >
@@ -380,12 +396,15 @@ export function MountedBottomDrawer({
               {
                 width: '100%',
                 maxWidth: isWideLayout ? modalMaxWidth : undefined,
-                maxHeight: screenHeight - insets.top - spacing.lg,
+                maxHeight: screenHeight - sheetTopInset - spacing.lg,
                 // Fill shrinks height and adds marginBottom to align bottom above keys; content-sized mode retains translateY shift.
                 height: fillHeight,
                 marginBottom: fillAvailable ? keyboardInset : 0,
-                paddingBottom:
-                  fillAvailable && keyboardInset > 0 ? spacing.sm : insets.bottom + spacing.lg
+                paddingBottom: contentScrollable
+                  ? 0
+                  : fillAvailable && keyboardInset > 0
+                    ? spacing.sm
+                    : insets.bottom + spacing.lg
               },
               drawerStyle
             ]}

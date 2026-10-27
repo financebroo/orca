@@ -3,6 +3,10 @@ import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MobileSourceControlHeader } from './MobileSourceControlHeader'
 
+vi.mock('../layout/side-safe-area', () => ({
+  useStatusColumn: () => null,
+  useStatusColumnPadding: () => 0
+}))
 vi.mock('react-native', () => ({
   Pressable: 'Pressable',
   Text: 'Text',

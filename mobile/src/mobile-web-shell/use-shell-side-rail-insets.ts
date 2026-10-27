@@ -26,5 +26,8 @@ export function useShellSideRailInsets(insets: EdgeInsets, active: boolean): Edg
   )
   const claimed = available && active && focused
   useSideRailContent(claimed ? SIDE_RAIL_DRAWN_BY_SCREEN : null)
-  return claimed ? { ...insets, right: windowInsets.right } : insets
+  // iPhone Duo (2026-10-27): the root zeroes the top inset unfolded in portrait, so the page saw no
+  // status block and its header never stacked beside it; the page's own SideSafeArea zeroes it again.
+  const withTop = { ...insets, top: windowInsets.top }
+  return claimed ? { ...withTop, right: windowInsets.right } : withTop
 }

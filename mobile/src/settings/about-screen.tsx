@@ -5,6 +5,7 @@ import { ChevronLeft, Globe } from 'lucide-react-native'
 import Svg, { Path } from 'react-native-svg'
 import { OrcaLogo } from '../components/OrcaLogo'
 import { colors, spacing, typography } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 
 function GithubIcon({ size = 16, color = colors.textSecondary }) {
   return (
@@ -37,10 +38,13 @@ export default function AboutScreen({
     void openExternal(url).catch(() => setError('Could not open the link. Try again.'))
   }
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           style={styles.backButton}
           accessibilityRole="button"

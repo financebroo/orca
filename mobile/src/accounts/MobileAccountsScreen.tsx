@@ -7,6 +7,7 @@ import { loadHosts } from '../transport/host-store'
 import { useHostClient } from '../transport/host-client-hooks'
 import { colors, spacing } from '../theme/mobile-theme'
 import { styles } from './mobile-accounts-screen-styles'
+import { useStatusColumn } from '../layout/side-safe-area'
 import { useNow } from '../hooks/use-now'
 import { ClaudeIcon, OpenAIIcon } from '../components/AgentIcons'
 import {
@@ -35,6 +36,8 @@ type AccountsNotice = { title: string; message: string }
 export function MobileAccountsScreen() {
   const router = useRouteHandoff()
   const insets = useSafeAreaInsets()
+  // Folded Duo: full-width content; the header row (title + refresh) stays left of the status column.
+  const statusColumn = useStatusColumn()
   const { hostId } = useLocalSearchParams<{ hostId: string }>()
 
   // Why: shared client per host. See docs/mobile-shared-client-per-host.md.
@@ -321,9 +324,26 @@ export function MobileAccountsScreen() {
     )
   }
 
+  const refreshButton = (
+    <Pressable
+      style={styles.iconButton}
+      onPress={refresh}
+      disabled={!client || refreshing || connState !== 'connected'}
+      hitSlop={8}
+      accessibilityRole="button"
+      accessibilityLabel="Refresh accounts"
+    >
+      {refreshing ? (
+        <ActivityIndicator size="small" color={colors.textSecondary} />
+      ) : (
+        <RefreshCw size={18} color={colors.textSecondary} />
+      )}
+    </Pressable>
+  )
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.topRow}>
+      <View style={[styles.topRow, statusColumn !== null && { paddingRight: statusColumn.width }]}>
         <Pressable
           style={styles.backButton}
           onPress={() => router.back()}
@@ -340,20 +360,7 @@ export function MobileAccountsScreen() {
             </Text>
           ) : null}
         </View>
-        <Pressable
-          style={styles.iconButton}
-          onPress={refresh}
-          disabled={!client || refreshing || connState !== 'connected'}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Refresh accounts"
-        >
-          {refreshing ? (
-            <ActivityIndicator size="small" color={colors.textSecondary} />
-          ) : (
-            <RefreshCw size={18} color={colors.textSecondary} />
-          )}
-        </Pressable>
+        {refreshButton}
       </View>
 
       <ScrollView

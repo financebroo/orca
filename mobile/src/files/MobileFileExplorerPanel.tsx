@@ -22,6 +22,7 @@ import {
   type FileExplorerRow
 } from './file-tree'
 import { colors, spacing } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import {
   beginDirectoryLoad,
   createDirectoryLoadRevisions,
@@ -45,6 +46,7 @@ export function MobileFileExplorerPanel(props: {
   onRequestClose?: () => void
 }) {
   const { hostId, worktreeId, name, embedded, onRequestClose } = props
+  const statusColumnPadding = useStatusColumnPadding()
   const router = useWorkspaceRouteHandoff()
   const executionHost = useWorkspaceExecutionHost()
   const { client, state: connState } = useWorkspaceClient(hostId)
@@ -319,7 +321,7 @@ export function MobileFileExplorerPanel(props: {
   }
 
   const headerBar = (
-    <View style={styles.topBar}>
+    <View style={[styles.topBar, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}>
       {embedded ? (
         <Pressable
           style={({ pressed }) => [styles.backButton, pressed && styles.backButtonPressed]}

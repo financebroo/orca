@@ -10,6 +10,7 @@ import { isRemoteExecutionHostId } from '../../../src/shared/execution-host'
 import type { AgentActivityDisplayMode } from '../../../src/shared/ui-chrome-types'
 import { areStructurallyEqual } from '../worktree/structural-equality'
 import { projectGroupRowIndent } from '../worktree/project-group-indent'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { getWorktreeMetaGlyphPresence } from '../worktree/worktree-meta-glyph-presence'
 import { AgentSpinner } from './AgentSpinner'
 import { HostKindIcon } from './HostKindIcon'
@@ -59,6 +60,7 @@ function WorktreeListRowComponent({
   onLongPress,
   onToggleLineage
 }: Props) {
+  const statusColumnWidth = useStatusColumnPadding()
   const isFolderWorkspace = item.workspaceKind === 'folder-workspace'
   const folderMeta = item.comment?.trim() || item.path || 'Folder'
   const metaText = isFolderWorkspace ? folderMeta : displayBranch(item.branch)
@@ -221,7 +223,20 @@ function WorktreeListRowComponent({
       </View>
 
       {item.liveTerminalCount > 0 && (
-        <Text style={styles.terminalCount}>{item.liveTerminalCount}</Text>
+        <Text
+          style={[
+            styles.terminalCount,
+            // iPhone Duo (2026-10-27): folded, the count sits 8pt from the screen's right edge (owner's call);
+            // the rest of the row stays full width.
+            statusColumnWidth > 0 && {
+              position: 'absolute',
+              right: spacing.sm,
+              top: spacing.sm + 2
+            }
+          ]}
+        >
+          {item.liveTerminalCount}
+        </Text>
       )}
     </Pressable>
   )

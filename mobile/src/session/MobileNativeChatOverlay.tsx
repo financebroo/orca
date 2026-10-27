@@ -40,6 +40,7 @@ type Props = {
   keyboardInset: number
   bottomInset?: number
   fitScreenCorners?: boolean
+  textScale?: number
 }
 
 // Keep the terminal subscription and streaming gate above view toggles; the chat list unmounts below this boundary.
@@ -62,7 +63,8 @@ export function MobileNativeChatOverlay({
   getSendCompletionGeneration,
   keyboardInset,
   bottomInset,
-  fitScreenCorners
+  fitScreenCorners,
+  textScale
 }: Props): React.JSX.Element | null {
   const session = controller.nativeChatSession
   const agent = controller.nativeChatAgent ?? ''
@@ -192,6 +194,7 @@ export function MobileNativeChatOverlay({
                 keyboardInset={keyboardInset}
                 bottomInset={bottomInset}
                 fitScreenCorners={fitScreenCorners}
+                textScale={textScale}
               />
             </MobileNativeChatReplyRevealsContext.Provider>
           </MobileNativeChatItemSourceContext.Provider>

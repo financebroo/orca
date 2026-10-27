@@ -5,7 +5,6 @@ import {
   getTerminalCommandKeyboardType,
   getTerminalLiveInputKeyboardType
 } from '../terminal/terminal-keyboard-type'
-import { MobileTerminalLiveInputStatus } from './MobileTerminalLiveInputStatus'
 import { MobileSessionTerminalInputActions } from './MobileSessionTerminalInputActions'
 import { MobileSessionAccessoryKeys } from './MobileSessionAccessoryKeys'
 import { colors } from '../theme/mobile-theme'
@@ -29,10 +28,8 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
     liveInputEnabled,
     focusLiveInput,
     showNativeChat,
-    dictation,
     handleSend,
     dismissSoftwareKeyboard,
-    isAttaching,
     activeMarkdownTab,
     activeFileTab,
     activeBrowserTab,
@@ -55,30 +52,95 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
       >
         {/* Accessory keys; the side rail or the folded status-column strip holds them when present. */}
         {keysInRail ? null : (
-          <View ref={accessoryBarKeepsKeyboard} style={styles.accessoryBar}>
-            {/* Why: fixed keyboard escape hatch; outside ScrollView + shortcut path so it can't scroll away or be hidden (#5106). */}
-            {keyboardLift > 0 && (
-              <Pressable
-                style={({ pressed }) => [
-                  styles.keyboardDismissKey,
-                  pressed && styles.accessoryKeyPressed
-                ]}
-                onPress={dismissSoftwareKeyboard}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel="Dismiss keyboard"
-                accessibilityHint="Hides the software keyboard and keeps the current terminal session open."
-              >
-                <View style={styles.keyboardDismissGlyph}>
-                  <KeyboardIcon size={15} color={colors.textSecondary} strokeWidth={2} />
-                  <ChevronDown
-                    size={10}
-                    color={colors.textSecondary}
-                    strokeWidth={2.5}
-                    style={styles.keyboardDismissChevron}
-                  />
-                </View>
-              </Pressable>
+          <View
+            ref={accessoryBarKeepsKeyboard}
+            style={[styles.accessoryBar, keyboardLift === 0 && styles.accessoryBarTall]}
+          >
+            {liveInputEnabled ? (
+              <>
+                {/* iPhone Duo (2026-10-26): live input has no bar of its own; the row leads with a wide
+                    keyboard key, then photo and mic, so nothing duplicates the terminal above the keyboard. */}
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.keyboardDismissKey,
+                    styles.keyRowKeyboardKey,
+                    pressed && styles.accessoryKeyPressed,
+                    // iPhone Duo (2026-10-27): white while the keyboard is up, so its state reads at a glance.
+                    keyboardLift > 0 && styles.keyRowKeyboardKeyActive,
+                    !canSend && keyboardLift === 0 && styles.sendButtonDisabled
+                  ]}
+                  disabled={!canSend && keyboardLift === 0}
+                  onPress={keyboardLift > 0 ? dismissSoftwareKeyboard : focusLiveInput}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    keyboardLift > 0 ? 'Dismiss keyboard' : 'Show keyboard for live terminal input'
+                  }
+                >
+                  <View style={styles.keyboardDismissGlyph}>
+                    <KeyboardIcon
+                      size={17}
+                      color={keyboardLift > 0 ? colors.bgBase : colors.textSecondary}
+                      strokeWidth={2}
+                    />
+                    {keyboardLift > 0 ? (
+                      <ChevronDown
+                        size={10}
+                        color={colors.bgBase}
+                        strokeWidth={2.5}
+                        style={styles.keyboardDismissChevron}
+                      />
+                    ) : null}
+                  </View>
+                </Pressable>
+                <MobileSessionTerminalInputActions controller={controller} inKeyRow />
+                <TextInput
+                  ref={bindLiveInputField}
+                  style={styles.liveInputCapture}
+                  value={liveInputCapture}
+                  onChange={handleLiveInputChange}
+                  onKeyPress={handleLiveInputKeyPress}
+                  onSubmitEditing={submitLiveInput}
+                  placeholder=""
+                  showSoftInputOnFocus
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  spellCheck={false}
+                  smartInsertDelete={false}
+                  // Why: iOS textContentType overrides autoComplete and can narrow the keyboard; keep IME switching available.
+                  autoComplete="off"
+                  keyboardType={getTerminalLiveInputKeyboardType(hostOs())}
+                  returnKeyType="default"
+                  blurOnSubmit={false}
+                  editable={canSend}
+                  importantForAutofill="no"
+                />
+              </>
+            ) : (
+              // Why: fixed keyboard escape hatch; outside ScrollView + shortcut path so it can't scroll away or be hidden (#5106).
+              keyboardLift > 0 && (
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.keyboardDismissKey,
+                    pressed && styles.accessoryKeyPressed
+                  ]}
+                  onPress={dismissSoftwareKeyboard}
+                  hitSlop={8}
+                  accessibilityRole="button"
+                  accessibilityLabel="Dismiss keyboard"
+                  accessibilityHint="Hides the software keyboard and keeps the current terminal session open."
+                >
+                  <View style={styles.keyboardDismissGlyph}>
+                    <KeyboardIcon size={15} color={colors.textSecondary} strokeWidth={2} />
+                    <ChevronDown
+                      size={10}
+                      color={colors.textSecondary}
+                      strokeWidth={2.5}
+                      style={styles.keyboardDismissChevron}
+                    />
+                  </View>
+                </Pressable>
+              )
             )}
             {/* Why: default tap handling makes the first accessory-key tap dismiss the keyboard and get swallowed (#5106). */}
             <ScrollView
@@ -88,57 +150,12 @@ export function MobileSessionCommandDock({ controller }: { controller: MobileSes
               contentContainerStyle={styles.accessoryContent}
               keyboardShouldPersistTaps="always"
             >
-              <MobileSessionAccessoryKeys controller={controller} />
+              <MobileSessionAccessoryKeys controller={controller} tall={keyboardLift === 0} />
             </ScrollView>
           </View>
         )}
 
-        {}
-        {liveInputEnabled ? (
-          <View style={[styles.inputBar, styles.liveInputBar, cornerFit]}>
-            <Pressable
-              style={({ pressed }) => [
-                styles.liveInputFocusTarget,
-                pressed && styles.liveInputFocusTargetPressed,
-                !canSend && styles.liveInputFocusTargetDisabled
-              ]}
-              disabled={!canSend}
-              onPress={focusLiveInput}
-              accessibilityRole="button"
-              accessibilityLabel="Show keyboard for live terminal input"
-              accessibilityHint="Typed text is sent directly to the active terminal"
-            >
-              <KeyboardIcon size={16} color={colors.textSecondary} strokeWidth={2} />
-              <MobileTerminalLiveInputStatus
-                dictation={dictation}
-                isAttaching={isAttaching}
-                liveInputText={liveInputCapture}
-              />
-            </Pressable>
-            <MobileSessionTerminalInputActions controller={controller} />
-            <TextInput
-              ref={bindLiveInputField}
-              style={styles.liveInputCapture}
-              value={liveInputCapture}
-              onChange={handleLiveInputChange}
-              onKeyPress={handleLiveInputKeyPress}
-              onSubmitEditing={submitLiveInput}
-              placeholder=""
-              showSoftInputOnFocus
-              autoCapitalize="none"
-              autoCorrect={false}
-              spellCheck={false}
-              smartInsertDelete={false}
-              // Why: iOS textContentType overrides autoComplete and can narrow the keyboard; keep IME switching available.
-              autoComplete="off"
-              keyboardType={getTerminalLiveInputKeyboardType(hostOs())}
-              returnKeyType="default"
-              blurOnSubmit={false}
-              editable={canSend}
-              importantForAutofill="no"
-            />
-          </View>
-        ) : (
+        {liveInputEnabled ? null : (
           <View style={[styles.inputBar, cornerFit]}>
             <TextInput
               ref={bindCommandField}

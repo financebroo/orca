@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Plus
 } from './mobile-tasks-dependencies'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 import { MobileTasksHostSubtitle } from './mobile-tasks-host-subtitle'
 import { styles } from './mobile-tasks-legacy-styles'
 import { renderMobileTasksProviderControls } from './mobile-tasks-provider-controls'
@@ -22,9 +23,18 @@ const REFRESH_LABELS = {
 } as const
 
 export function renderMobileTasksChrome(model: ConnectionPresentationModel) {
+  return <MobileTasksTopChrome model={model} />
+}
+
+// A component so the hook runs in render; renderMobileTasksStatusBar stays a plain function for its test.
+function MobileTasksTopChrome({ model }: { model: ConnectionPresentationModel }) {
   const { setTaskCopyFeedbackRootRef } = model
+  const statusColumnPadding = useStatusColumnPadding()
   return (
-    <View ref={setTaskCopyFeedbackRootRef} style={styles.topChrome}>
+    <View
+      ref={setTaskCopyFeedbackRootRef}
+      style={[styles.topChrome, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+    >
       {renderMobileTasksStatusBar(model)}
 
       {renderMobileTasksProviderControls(model)}

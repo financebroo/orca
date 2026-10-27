@@ -10,6 +10,7 @@ import Animated, {
 import { useRouter } from 'expo-router'
 import { ChevronLeft, ChevronRight, Smartphone, Type } from 'lucide-react-native'
 import { colors, spacing } from '../src/theme/mobile-theme'
+import { useStatusColumnPadding } from '../src/layout/side-safe-area'
 import { loadHosts } from '../src/transport/host-store'
 import type { HostProfile } from '../src/transport/types'
 import { useFocusedSettingsHostClients } from '../src/transport/settings-host-client-connections'
@@ -29,24 +30,13 @@ import {
   saveTerminalAutocompleteEnabled,
   saveTerminalTextScale
 } from '../src/storage/preferences'
+import {
+  TEXT_SIZE_OPTIONS,
+  textSizeValueFromScale,
+  type TextSizeValue
+} from '../src/session/terminal-text-size-options'
 
 type RestoreValue = 'indefinite' | '60s' | '5m' | '30m'
-
-type TextSizeValue = 'smallest' | 'smaller' | 'default' | 'large' | 'larger' | 'largest'
-
-// Baseline zoom sits above fit-to-width; keep presets in sync with TERMINAL_TEXT_SCALES and pinch snapping.
-const TEXT_SIZE_OPTIONS: (PickerOption<TextSizeValue> & { scale: number })[] = [
-  { value: 'smallest', label: 'Smallest (50%)', scale: 0.5 },
-  { value: 'smaller', label: 'Smaller (75%)', scale: 0.75 },
-  { value: 'default', label: 'Default (100%)', scale: 1 },
-  { value: 'large', label: 'Large (125%)', scale: 1.25 },
-  { value: 'larger', label: 'Larger (150%)', scale: 1.5 },
-  { value: 'largest', label: 'Largest (200%)', scale: 2 }
-]
-
-function textSizeValueFromScale(scale: number): TextSizeValue {
-  return TEXT_SIZE_OPTIONS.find((o) => o.scale === scale)?.value ?? 'default'
-}
 
 function textSizeSummary(scale: number): string {
   return (TEXT_SIZE_OPTIONS.find((o) => o.scale === scale) ?? TEXT_SIZE_OPTIONS[0]!).label
@@ -122,6 +112,7 @@ function HostFitRow({
 }
 
 export default function TerminalSettingsScreen() {
+  const statusColumnPadding = useStatusColumnPadding()
   const router = useRouter()
   const insets = useSafeAreaInsets()
   const [hosts, setHosts] = useState<HostProfile[]>([])
@@ -239,7 +230,9 @@ export default function TerminalSettingsScreen() {
 
   return (
     <GestureHandlerRootView style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           style={styles.backButton}
           onPress={() => router.back()}

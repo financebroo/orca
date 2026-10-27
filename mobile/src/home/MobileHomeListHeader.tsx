@@ -3,15 +3,19 @@ import type { HomeStatsSummary } from '../stats/home-stats-total'
 import { HomeStatsCards } from '../stats/HomeStatsCards'
 import { colors, spacing } from '../theme/mobile-theme'
 import { MobileHomeAppUpdateCard } from './MobileHomeAppUpdateCard'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 
-/** `stats` null hides the counters; the wide two-column home moves them to its left column. */
+/** `stats` null hides the counters; the unfolded split moves them to its left column. */
 export function MobileHomeListHeader({ stats }: { stats: HomeStatsSummary | null }) {
+  // Folded Duo: the hero and stats sit beside the status column; everything below runs full width.
+  const statusColumnPadding = useStatusColumnPadding()
+  const besideStatusColumn = statusColumnPadding > 0 && { paddingRight: statusColumnPadding }
   return (
     <View>
-      <View style={styles.hero}>
+      <View style={[styles.hero, besideStatusColumn]}>
         <Text style={styles.heroTitle}>Welcome back</Text>
       </View>
-      {stats ? <HomeStatsCards stats={stats} /> : null}
+      {stats ? <HomeStatsCards stats={stats} style={besideStatusColumn} /> : null}
       <MobileHomeAppUpdateCard />
       <Text style={styles.sectionHeading}>Desktops</Text>
     </View>

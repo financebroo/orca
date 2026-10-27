@@ -4,12 +4,16 @@ import { ChevronLeft } from 'lucide-react-native'
 import type { RpcClient } from '../transport/rpc-client'
 import { StatsUsagePanel } from '../stats/StatsUsagePanel'
 import { colors, spacing } from '../theme/mobile-theme'
+import { useStatusColumnPadding } from '../layout/side-safe-area'
 
 export default function StatsUsageScreen(props: { client: RpcClient | null; onBack: () => void }) {
   const insets = useSafeAreaInsets()
+  const statusColumnPadding = useStatusColumnPadding()
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
-      <View style={styles.topRow}>
+      <View
+        style={[styles.topRow, statusColumnPadding > 0 && { paddingRight: statusColumnPadding }]}
+      >
         <Pressable
           style={styles.backButton}
           accessibilityRole="button"
