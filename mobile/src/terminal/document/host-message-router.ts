@@ -24,6 +24,7 @@ export type TerminalHostMessage = {
   fontScale?: number
   preserveScroll?: boolean
   oscLinks?: unknown
+  kittyKeyboardFlags?: unknown
   data?: string
   frame?: { width: number; height: number } | null
 }
@@ -63,7 +64,8 @@ export function handleMsg(scope: TerminalDocumentScope, msg: TerminalHostMessage
       msg.terminalTheme,
       msg.fontScale,
       msg.preserveScroll!,
-      msg.oscLinks
+      msg.oscLinks,
+      msg.kittyKeyboardFlags
     )
   } else if (msg.type === 'set-font-scale') {
     // Ignore the host echo of a pinch value so it cannot reset post-pinch state.

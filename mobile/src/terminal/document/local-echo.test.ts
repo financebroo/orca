@@ -24,6 +24,7 @@ function createEchoScope() {
         },
         getLine: () => ({
           length: base.cols,
+          isWrapped: false,
           translateToString: (_trim: boolean, start = 0, end = base.cols) =>
             screen.text.padEnd(base.cols).slice(start, end)
         })
