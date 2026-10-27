@@ -44,6 +44,15 @@ export function forgetLocalEcho(scope: TerminalDocumentScope) {
   resetLocalEcho(scope)
 }
 
+// Trust is a row number, which means nothing in the other buffer (vim exits to a shell sudo prompt).
+function syncLocalEchoBuffer(scope: TerminalDocumentScope) {
+  const type = scope.term!.buffer.active.type
+  if (scope.localEchoBufferType !== type) {
+    scope.localEchoBufferType = type
+    forgetLocalEcho(scope)
+  }
+}
+
 // Expire by the oldest pending guess; restarting per keystroke would keep an unechoed first char on screen.
 function armTimeout(scope: TerminalDocumentScope) {
   if (scope.localEchoTimer) {
@@ -67,6 +76,7 @@ export function predictLocalEcho(scope: TerminalDocumentScope, data: string) {
   if (!scope.term) {
     return resetLocalEcho(scope)
   }
+  syncLocalEchoBuffer(scope)
   const chars = Array.from(data)
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i]
@@ -98,8 +108,12 @@ export function predictLocalEcho(scope: TerminalDocumentScope, data: string) {
 
 // A guess is confirmed once its cell holds the same char and the host cursor has moved past it.
 export function reconcileLocalEcho(scope: TerminalDocumentScope) {
+  if (!scope.term) {
+    return
+  }
+  syncLocalEchoBuffer(scope)
   const anchor = scope.localEchoAnchor
-  if (!scope.term || !anchor || scope.localEchoPending.length === 0) {
+  if (!anchor || scope.localEchoPending.length === 0) {
     return
   }
   const buffer = scope.term.buffer.active

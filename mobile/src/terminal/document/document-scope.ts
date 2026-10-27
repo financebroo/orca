@@ -102,6 +102,7 @@ export type TerminalDocumentState = {
   localEchoAnchor: { col: number; row: number } | null
   localEchoTimer: ReturnType<typeof setTimeout> | null
   localEchoTrustedRow: number | null
+  localEchoBufferType: string | null
   surface: HTMLElement | null
   pendingTerm: TerminalDocumentTerminal | null
   committedTerm: TerminalDocumentTerminal | null
@@ -223,6 +224,7 @@ function createTerminalDocumentState(): TerminalDocumentState {
     localEchoAnchor: null,
     localEchoTimer: null,
     localEchoTrustedRow: null,
+    localEchoBufferType: null,
     surface: null,
     pendingTerm: null,
     committedTerm: null,

@@ -115,6 +115,16 @@ describe('local echo', () => {
     expect(scope.localEchoTrustedRow).toBeNull()
   })
 
+  it('forgets row trust when the host switches screen buffers', () => {
+    const { scope, screen, hostEcho } = createEchoScope()
+    predictLocalEcho(scope, 'a')
+    hostEcho('a')
+    expect(scope.localEchoTrustedRow).toBe(0)
+    screen.type = 'alternate'
+    reconcileLocalEcho(scope)
+    expect(scope.localEchoTrustedRow).toBeNull()
+  })
+
   it('expires by the oldest guess even while typing continues', () => {
     vi.useFakeTimers()
     const { scope, hostEcho } = createEchoScope()
