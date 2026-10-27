@@ -37,9 +37,10 @@ import { newWorkspaceOverlayHref } from '../new-workspace/new-workspace-overlay-
 export function MobileHomeScreen() {
   const data = useMobileHomeData()
   const insets = useSafeAreaInsets()
-  const { isWideLayout, contentMaxWidth } = useResponsiveLayout()
-  // Wide screens (unfolded iPhone Duo, iPad): one column wastes the width, so stats get their own column.
-  const splitColumns = isWideLayout
+  const { isWideLayout, isTabletLayout, contentMaxWidth } = useResponsiveLayout()
+  // Tablet-sized windows (iPad, unfolded iPhone Duo either way up): one column wastes the width, so
+  // stats get their own column. Not isWideLayout: the unfolded Duo upright is 626pt wide, under its cutoff.
+  const splitColumns = isTabletLayout
   const [refreshKey, setRefreshKey] = useState(0)
   const refreshUsage = useCallback(() => setRefreshKey((key) => key + 1), [])
   const openSettings = useCallback(() => data.router.push('/settings'), [data.router])
